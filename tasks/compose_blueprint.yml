@@ -45,7 +45,7 @@
   ansible.builtin.file:
     path: "{{ edge_compose_blueprint_output_dir }}"
     state: 'directory'
-    mode: '0700'
+    mode: '0755'
 
 - name: 'Assemble blueprint file'
   ansible.builtin.assemble:
