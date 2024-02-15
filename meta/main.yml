@@ -1,0 +1,21 @@
+---
+galaxy_info:
+  author: thulium_drake
+  description: A role to generate RH Device Edge blueprints from a repo
+  role_name: edge_compose_blueprints
+
+  license: GPLv3
+
+  min_ansible_version: '2.10'
+
+  platforms:
+    - name: EL
+      versions:
+        - '9'
+
+  galaxy_tags:
+    - device
+    - edge
+    - blueprints
+
+dependencies: []

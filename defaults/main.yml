@@ -1,0 +1,31 @@
+---
+# Source repository with blueprint components
+edge_compose_blueprint_git_repo: 'ssh://git.example.com/my_rh_edge_blueprints'
+edge_compose_blueprint_git_version: 'master'
+edge_compose_blueprint_checkout: '/home/ansible/rh_edge_blueprints'
+
+# Directory where to store the results on the Ansible controller
+edge_compose_blueprint_output_dir: '/tmp/compose_blueprints_output'
+
+# Blueprint definitions
+edge_compose_blueprint_images:
+  - name: 'microshift'
+    base: 'base.toml'
+    ref: 'rhel/9/x86_64/edge'
+    config_profile: 'demo'
+    modules:
+      - 'profile_demo.toml'
+      - 'mod_microshift_images.toml'
+    need_pull_secret: false
+    ssh_key: 'ssh-ed25519 AAAA.... ansible@example.nl'  # If not defined will fallback to edge_compose_blueprint_ssh_key
+    kickstart_profile: 'microshift-single-disk.ks.j2'
+    kickstart_validate: false
+
+## Common Kickstart variables for all blueprints
+# For blueprints that need a pull-secret incorporated in them during installation
+# Add a URL below that contains a pull-secret.json
+edge_compose_blueprint_pull_secret_url: 'http://repo.example.nl/pull-secret.json'
+
+# Base URL where the images are stored, the image, do not include image name
+edge_compose_blueprint_repository_baseurl: 'http://repo.example.nl'
+edge_compose_blueprint_ssh_key: 'ssh-ed25519 AAAA.... ansible@example.nl'

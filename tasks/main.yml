@@ -1,0 +1,13 @@
+---
+#- name: 'Ensure git checkout up to date'
+#  ansible.builtin.git:
+#    repo: "{{ edge_compose_blueprint_git_repo }}"
+#    dest: "{{ edge_compose_blueprint_checkout }}"
+#    version: "{{ edge_compose_blueprint_git_version }}"
+#    update: false
+
+- name: 'Render blueprints and kickstart files'
+  ansible.builtin.include_tasks: 'tasks/compose_blueprint.yml'
+  loop: "{{ edge_compose_blueprint_images }}"
+  loop_control:
+    loop_var: 'image'

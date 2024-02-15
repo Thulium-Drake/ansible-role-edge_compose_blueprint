@@ -1,0 +1,73 @@
+---
+- name: 'Ensure temporary work directory'
+  ansible.builtin.file:
+    path: "/tmp/compose_{{ image['name'] }}/toml"
+    state: 'directory'
+    mode: '0700'
+
+- name: 'Render base blueprint template'
+  ansible.builtin.template:
+    src: "{{ edge_compose_blueprint_checkout }}/base/{{ image['base'] }}"
+    dest: "/tmp/compose_{{ image['name'] }}/toml/00_base.toml"
+    mode: '0644'
+  when: "'toml.j2' in image['base']"
+
+- name: 'Copy base blueprint'
+  ansible.builtin.copy:
+    src: "{{ edge_compose_blueprint_checkout }}/base/{{ image['base'] }}"
+    dest: "/tmp/compose_{{ image['name'] }}/toml/00_base.toml"
+    mode: '0644'
+  when: "'.toml.j2' not in image['base']"
+
+- name: 'Render blueprint module templates'
+  ansible.builtin.template:
+    src: "{{ edge_compose_blueprint_checkout }}/modules/{{ module }}"
+    dest: "/tmp/compose_{{ image['name'] }}/toml/{{ module_idx }}_{{ module | regex_replace('.j2.', '') }}"
+    mode: '0644'
+  when: "'.toml.j2' in module"
+  loop: "{{ image['modules'] }}"
+  loop_control:
+    loop_var: 'module'
+    index_var: 'module_idx'
+
+- name: 'Copy blueprint modules'
+  ansible.builtin.copy:
+    src: "{{ edge_compose_blueprint_checkout }}/modules/{{ module }}"
+    dest: "/tmp/compose_{{ image['name'] }}/toml/{{ module_idx }}_{{ module }}"
+    mode: '0644'
+  when: "'.toml.j2' not in module"
+  loop: "{{ image['modules'] }}"
+  loop_control:
+    loop_var: 'module'
+    index_var: 'module_idx'
+
+- name: 'Ensure output directory'
+  ansible.builtin.file:
+    path: "{{ edge_compose_blueprint_output_dir }}"
+    state: 'directory'
+    mode: '0700'
+
+- name: 'Assemble blueprint file'
+  ansible.builtin.assemble:
+    src: "/tmp/compose_{{ image['name'] }}/toml"
+    dest: "{{ edge_compose_blueprint_output_dir }}/{{ image['name'] }}.toml"
+    mode: '0644'
+
+- name: 'Render Kickstart profile'
+  ansible.builtin.template:
+    src: "{{ edge_compose_blueprint_checkout }}/kickstart/{{ image['kickstart_profile'] }}"
+    dest: "{{ edge_compose_blueprint_output_dir }}/{{ image['name'] }}.ks"
+    mode: '0644'
+  when: "'.ks.j2' in image['kickstart_profile']"
+
+- name: 'Copy Kickstart profile'
+  ansible.builtin.template:
+    src: "{{ edge_compose_blueprint_checkout }}/kickstart/{{ image['kickstart_profile'] }}"
+    dest: "{{ edge_compose_blueprint_output_dir }}/{{ image['name'] }}.ks"
+    mode: '0644'
+  when: "'.ks.j2' not in image['kickstart_profile']"
+
+- name: 'Clean up temporary work directory'
+  ansible.builtin.file:
+    path: "/tmp/compose_{{ image['name'] }}"
+    state: 'absent'
