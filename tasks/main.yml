@@ -1,4 +1,13 @@
 ---
+- name: 'Ensure dependencies'
+  ansible.builtin.package:
+    name:
+      - 'dnf-utils'
+      - 'git'
+      - 'rpm-build'
+    state: 'present'
+  become: true
+
 - name: 'Ensure git checkout up to date'
   ansible.builtin.git:
     repo: "{{ edge_compose_blueprint_git_repo }}"

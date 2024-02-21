@@ -8,15 +8,19 @@ edge_compose_blueprint_checkout: '/home/ansible/rh_edge_blueprints'
 edge_compose_blueprint_output_dir: '/tmp/compose_blueprints_output'
 
 # Blueprint definitions
+# If required you can also add extra variables here that are used in the jinja templates called for this blueprint
+# The following keys are handled in this role:
+#  mandatory: name, base, ref, kickstart_profile
+#  optional: config_rpm_modules, modules, ssh_key
 edge_compose_blueprint_images:
   - name: 'microshift'
     base: 'base.toml'
     ref: 'rhel/9/x86_64/edge'
-    config_profile: 'demo'
-    modules:
+    config_rpm_modules:  # Optional, which trees to include in the '<image_name>-config.rpm'
+      - 'guestbook'
+    modules:             # Optional, extra TOML fragments to include in the final blueprint
       - 'profile_demo.toml'
       - 'mod_microshift_images.toml'
-    need_pull_secret: false
     ssh_key: 'ssh-ed25519 AAAA.... ansible@example.nl'  # If not defined will fallback to edge_compose_blueprint_ssh_key
     kickstart_profile: 'microshift-single-disk.ks.j2'
     kickstart_validate: false
