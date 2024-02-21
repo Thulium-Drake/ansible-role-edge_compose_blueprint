@@ -11,10 +11,11 @@ edge_compose_blueprint_output_dir: '/tmp/compose_blueprints_output'
 # If required you can also add extra variables here that are used in the jinja templates called for this blueprint
 # The following keys are handled in this role:
 #  mandatory: name, base, ref, kickstart_profile
-#  optional: config_rpm_modules, modules, ssh_key
+#  optional: config_rpm_modules, modules, ssh_key, microshift_version
 edge_compose_blueprint_images:
   - name: 'microshift'
-    base: 'base.toml'
+    microshift_version: '4.14.10'
+    base: 'base.toml.j2'
     ref: 'rhel/9/x86_64/edge'
     config_rpm_modules:  # Optional, which trees to include in the '<image_name>-config.rpm'
       - 'guestbook'

@@ -5,6 +5,7 @@
     state: 'directory'
     mode: '0700'
   loop:
+    - 'microshift'
     - 'toml'
     - 'rpm/BUILD'
     - "rpm/BUILDROOT/{{ image['name'] }}-config-1.0-1.x86_64"
@@ -18,6 +19,33 @@
     path: "{{ edge_compose_blueprint_output_dir }}"
     state: 'directory'
     mode: '0755'
+
+- name: 'Get microshift container image URIs'
+  when: image['microshift_version'] is defined
+  block:
+    - name: 'Download RPM and extract release-x86_64.json'
+      ansible.builtin.shell: |
+        set -o pipefail
+        cd /tmp/compose_{{ image['name'] }}/microshift
+        dnf download microshift-release-info-{{ image['microshift_version'] }}
+        rpm2cpio microshift-release-info-{{ edge_microshift_ocp_version }}-*.rpm | \
+        cpio --to-stdout -vi ./usr/share/microshift/release/release-x86_64.json
+      register: 'microshift_rpm_contents'
+      changed_when: false  # This task collects information
+
+    - name: 'Store results in fact'
+      ansible.builtin.set_fact:
+        edge_microshift_info: "{{ microshift_rpm_contents['stdout'] | from_json }}"
+
+    - name: 'Render Microshift images snippet'
+      ansible.builtin.copy:
+        content: |
+          {% for img in edge_microshift_info['images'] | dict2items %}
+          [[containers]]
+          source = "{{ img['value'] }}"
+          {% endfor %}
+        dest: "/tmp/compose_{{ image['name'] }}/toml/01_microshift_images.toml"
+        mode: '0644'
 
 - name: 'Render base blueprint template'
   ansible.builtin.template:
