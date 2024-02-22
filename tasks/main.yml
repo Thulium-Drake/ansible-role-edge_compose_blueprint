@@ -16,6 +16,7 @@
         repo: "{{ edge_compose_blueprint_git_repo }}"
         dest: "{{ edge_compose_blueprint_checkout }}"
         version: "{{ edge_compose_blueprint_git_version }}"
+        key_file: "{{ edge_compose_blueprint_git_sshkey | default(omit, true) }}"
         update: true
 
     - name: 'Render blueprints and kickstart files'
