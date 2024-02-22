@@ -16,7 +16,7 @@
 
 - name: 'Ensure output directory'
   ansible.builtin.file:
-    path: "{{ edge_compose_blueprint_output_dir }}"
+    path: '/etc/osbuild-composer/blueprints'
     state: 'directory'
     mode: '0755'
 
@@ -109,20 +109,20 @@
 - name: 'Assemble blueprint file'
   ansible.builtin.assemble:
     src: "/tmp/compose_{{ blueprint['name'] }}/toml"
-    dest: "{{ edge_compose_blueprint_output_dir }}/{{ blueprint['name'] }}.toml"
+    dest: "/etc/osbuild-composer/blueprints/{{ blueprint['name'] }}.toml"
     mode: '0644'
 
 - name: 'Render Kickstart profile'
   ansible.builtin.template:
     src: "{{ edge_compose_blueprint_checkout }}/kickstart/{{ blueprint['kickstart_profile'] }}"
-    dest: "{{ edge_compose_blueprint_output_dir }}/{{ blueprint['name'] }}.ks"
+    dest: "/etc/osbuild-composer/blueprints/{{ blueprint['name'] }}.ks"
     mode: '0644'
   when: "'.ks.j2' in blueprint['kickstart_profile']"
 
 - name: 'Copy Kickstart profile'
   ansible.builtin.template:
     src: "{{ edge_compose_blueprint_checkout }}/kickstart/{{ blueprint['kickstart_profile'] }}"
-    dest: "{{ edge_compose_blueprint_output_dir }}/{{ blueprint['name'] }}.ks"
+    dest: "/etc/osbuild-composer/blueprints/{{ blueprint['name'] }}.ks"
     mode: '0644'
   when: "'.ks.j2' not in blueprint['kickstart_profile']"
 
@@ -160,7 +160,7 @@
     - name: 'Copy RPM to output directory'
       ansible.builtin.copy:
         src: "/tmp/compose_{{ blueprint['name'] }}/rpm/RPMS/x86_64/{{ blueprint['name'] }}-config-1.0-1.x86_64.rpm"
-        dest: "{{ edge_compose_blueprint_output_dir }}/{{ blueprint['name'] }}-config-1.0-1.x86_64.rpm"
+        dest: "/etc/osbuild-composer/blueprints/{{ blueprint['name'] }}-config-1.0-1.x86_64.rpm"
         mode: '0644'
 
 - name: 'Clean up temporary work directory'
