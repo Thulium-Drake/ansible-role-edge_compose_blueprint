@@ -30,7 +30,3 @@
   loop: "{{ edge_compose_blueprint_images }}"
   loop_control:
     loop_var: 'image'
-
-- name: 'Update deployment server configuration'
-  when: edge_compose_blueprint_update_deployment_server | bool
-  ansible.builtin.include_tasks: 'tasks/update_deployment_server.yml'

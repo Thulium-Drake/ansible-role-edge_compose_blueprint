@@ -14,11 +14,14 @@
   loop_control:
     loop_var: 'directory'
 
-- name: 'Ensure output directory'
+- name: 'Ensure output directories'
   ansible.builtin.file:
-    path: '/etc/osbuild-composer/blueprints'
+    path: "{{ directory }}"
     state: 'directory'
     mode: '0755'
+  loop:
+    - '/var/www/html/config-rpms'
+    - "/var/www/html/{{ blueprint['name'] }}"
 
 - name: 'Get microshift container image URIs'
   when: blueprint['microshift_version'] is defined
@@ -115,14 +118,14 @@
 - name: 'Render Kickstart profile'
   ansible.builtin.template:
     src: "{{ edge_compose_blueprint_checkout }}/kickstart/{{ blueprint['kickstart_profile'] }}"
-    dest: "/etc/osbuild-composer/blueprints/{{ blueprint['name'] }}.ks"
+    dest: "/var/www/html/{{ blueprint['name'] }}/install.ks"
     mode: '0644'
   when: "'.ks.j2' in blueprint['kickstart_profile']"
 
 - name: 'Copy Kickstart profile'
   ansible.builtin.template:
     src: "{{ edge_compose_blueprint_checkout }}/kickstart/{{ blueprint['kickstart_profile'] }}"
-    dest: "/etc/osbuild-composer/blueprints/{{ blueprint['name'] }}.ks"
+    dest: "/var/www/html/{{ blueprint['name'] }}/install.ks"
     mode: '0644'
   when: "'.ks.j2' not in blueprint['kickstart_profile']"
 
@@ -160,10 +163,31 @@
     - name: 'Copy RPM to output directory'
       ansible.builtin.copy:
         src: "/tmp/compose_{{ blueprint['name'] }}/rpm/RPMS/x86_64/{{ blueprint['name'] }}-config-1.0-1.x86_64.rpm"
-        dest: "/etc/osbuild-composer/blueprints/{{ blueprint['name'] }}-config-1.0-1.x86_64.rpm"
+        dest: "/var/www/html/config-rpms/{{ blueprint['name'] }}-config-1.0-1.x86_64.rpm"
         mode: '0644'
+
+    - name: 'Update config RPM repository metadata'
+      ansible.builtin.command: /usr/bin/createrepo .
+      args:
+        chdir: '/var/www/html/config-rpms'
+      changed_when: true
 
 - name: 'Clean up temporary work directory'
   ansible.builtin.file:
     path: "/tmp/compose_{{ blueprint['name'] }}"
     state: 'absent'
+
+- name: 'Update PXEboot menu'
+  ansible.builtin.template:
+    src: "{{ pxeboot['name'] }}"
+    dest: "/var/lib/tftpboot/{{ pxeboot['dest'] }}"
+    owner: 'root'
+    group: 'root'
+    mode: '0644'
+  loop:
+    - name: 'pxelinux.cfg.j2'
+      dest: 'pxelinux.cfg/default'
+    - name: 'grub.cfg.j2'
+      dest: 'grub.cfg'
+  loop_control:
+    loop_var: 'pxeboot'

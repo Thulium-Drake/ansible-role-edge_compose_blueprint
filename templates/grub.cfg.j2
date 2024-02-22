@@ -1,0 +1,10 @@
+# {{ ansible_managed }}
+set default=0
+set timeout=-1
+
+{% for blueprint in edge_image_builder_blueprints %}
+menuentry "Install image: {{ blueprint }}" {
+  linuxefi vmlinuz root=live:http://{{ edge_image_builder_server_ip }}/install.img inst.ks=http://{{ edge_image_builder_server_ip }}/{{ blueprint }}/install.ks
+  initrdefi initrd.img
+}
+{% endfor %}

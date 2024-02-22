@@ -1,0 +1,22 @@
+# {{ ansible_managed }}
+DEFAULT menu.c32
+PROMPT 0
+TIMEOUT 0
+serial 0 115200
+
+MENU TITLE Red Hat Device Edge Deployment Server
+MENU WIDTH 80
+MENU ROWS 13 MENU MARGIN 20
+MENU ENDROW 20
+MENU TABMSGROW  23
+MENU TIMEOUTROW 24
+MENU CMDLINEROW 23
+
+MENU COLOR border *;* #00000000 #00000000 none
+
+{% for blueprint in edge_image_builder_blueprints %}
+LABEL Install image: {{ blueprint }}
+  MENU Install image: {{ blueprint }}
+  KERNEL vmlinuz
+  APPEND initrd=initrd.img root=live:http://{{ edge_image_builder_server_ip }}/install.img inst.ks=http://{{ edge_image_builder_server_ip }}/{{ blueprint }}/install.ks
+{% endfor %}
