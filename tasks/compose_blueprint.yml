@@ -156,14 +156,14 @@
     src: "{{ edge_compose_blueprint_checkout }}/kickstart/{{ blueprint['kickstart_profile'] }}"
     dest: "/var/www/html/{{ blueprint['name'] }}/install.ks"
     mode: '0644'
-  when: module['kickstart_profile'].endswith('.ks.j2')
+  when: blueprint['kickstart_profile'].endswith('.ks.j2')
 
 - name: 'Copy Kickstart profile'
   ansible.builtin.template:
     src: "{{ edge_compose_blueprint_checkout }}/kickstart/{{ blueprint['kickstart_profile'] }}"
     dest: "/var/www/html/{{ blueprint['name'] }}/install.ks"
     mode: '0644'
-  when: module['kickstart_profile'].endswith('.ks')
+  when: blueprint['kickstart_profile'].endswith('.ks')
 
 - name: 'Ensure directory for image release information'
   ansible.builtin.file:
