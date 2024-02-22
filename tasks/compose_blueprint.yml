@@ -43,15 +43,24 @@
       ansible.builtin.set_fact:
         edge_microshift_info: "{{ microshift_rpm_contents['stdout'] | from_json }}"
 
-    - name: 'Render Microshift images snippet'
+    - name: 'Render Microshift TOML snippet'
       ansible.builtin.copy:
         content: |
+          [[packages]]
+          name = "microshift"
+          version = "{{ blueprint['microshift_version'] }}"
+
           {% for img in edge_microshift_info['images'] | dict2items %}
           [[containers]]
           source = "{{ img['value'] }}"
           {% endfor %}
         dest: "/tmp/compose_{{ blueprint['name'] }}/toml/01_microshift_images.toml"
         mode: '0644'
+
+    - name: 'Add microshift to list of services to enable'
+      ansible.builtin.set_fact:
+        blueprint_enabled_services:
+          - 'microshift'
 
 - name: 'Render base blueprint template'
   ansible.builtin.template:
@@ -79,6 +88,17 @@
     depth: 1
     file_type: 'any'
   register: 'module_components'
+
+- name: 'Add services to list'
+  ansible.builtin.set_fact:
+    blueprint_enabled_services: "{{ (blueprint_enabled_services | default([])) + lookup('ansible.builtin.file', module['path']) | split('\n') }}"
+
+- name: 'Bla'
+  ansible.builtin.debug:
+    var: blueprint_enabled_services
+
+- name: 'Bla'
+  ansible.builtin.meta: end_play
 
 - name: 'Render blueprint module templates'
   ansible.builtin.template:
@@ -122,14 +142,14 @@
     src: "{{ edge_compose_blueprint_checkout }}/kickstart/{{ blueprint['kickstart_profile'] }}"
     dest: "/var/www/html/{{ blueprint['name'] }}/install.ks"
     mode: '0644'
-  when: "'.ks.j2' in blueprint['kickstart_profile']"
+  when: module['kickstart_profile'].endswith('.ks.j2')
 
 - name: 'Copy Kickstart profile'
   ansible.builtin.template:
     src: "{{ edge_compose_blueprint_checkout }}/kickstart/{{ blueprint['kickstart_profile'] }}"
     dest: "/var/www/html/{{ blueprint['name'] }}/install.ks"
     mode: '0644'
-  when: "'.ks.j2' not in blueprint['kickstart_profile']"
+  when: module['kickstart_profile'].endswith('.ks')
 
 - name: 'Ensure directory for image release information'
   ansible.builtin.file:
