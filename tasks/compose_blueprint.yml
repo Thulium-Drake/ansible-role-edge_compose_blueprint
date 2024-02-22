@@ -114,9 +114,6 @@
     dest: "/tmp/compose_{{ blueprint['name'] }}/toml/00_services.toml"
     mode: '0644'
 
-- name: 'Bla'
-  ansible.builtin.meta: end_play
-
 - name: 'Render blueprint module templates'
   ansible.builtin.template:
     src: "{{ module['path'] }}"
