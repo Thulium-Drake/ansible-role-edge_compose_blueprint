@@ -137,7 +137,7 @@
     state: 'directory'
     mode: '0755'
   loop:
-    - "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-1.x86_64/usr/etc/{{ edge_compose_blueprint_vendor }}"
+    - "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-1.x86_64/usr/etc/vendor"
     - "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-1.x86_64/etc/ansible/facts.d"
   loop_control:
     loop_var: 'image_release_dir'
@@ -145,13 +145,15 @@
 - name: 'Ensure image release information'
   ansible.builtin.template:
     src: 'image_release.ini.j2'
-    dest: "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-1.x86_64/usr/etc/{{ edge_compose_blueprint_vendor }}/image_release.fact"
+    dest: "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-1.x86_64/usr/etc/vendor/image_release.fact"
     mode: '0644'
 
 - name: 'Add symlink from /etc/ansible/facts.d to release information'
   ansible.builtin.file:
     path: "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-1.x86_64/etc/ansible/facts.d/image_release.fact"
-    src: "/usr/etc/{{ edge_compose_blueprint_vendor }}/image_release.fact"
+    src: '/usr/etc/vendor/image_release.fact'
+    state: 'link'
+    force: true  # link destination does not exist on the build server
 
 - name: 'Assemble RPM config module tree'
   ansible.builtin.copy:

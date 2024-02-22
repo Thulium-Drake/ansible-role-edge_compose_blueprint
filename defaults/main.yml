@@ -10,6 +10,9 @@ edge_compose_blueprint_checkout: '/home/ansible/rh_edge_blueprints'
 # Path with the key
 edge_compose_blueprint_git_sshkey: ''
 
+# Vendor information to place in image release file
+edge_compose_vendor: 'Thulium-Drake'
+
 # Blueprint definitions
 # If required you can also add extra variables here that are used in the jinja templates called for this blueprint
 # The following keys are handled in this role:
