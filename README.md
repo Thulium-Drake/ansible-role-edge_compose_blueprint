@@ -1,26 +1,36 @@
 # Compose Red Hat Device Edge blueprints from components
 This role will compose blueprints for use by osbuild-composer and the Kickstart profile needed to install it.
 
-Most of this role should run as the 'local' Ansible user in order to provide access to the resources in Git etc. Become is only required for installing dependencies.
-
 In order to function it requires a companion repository that contains the following structure:
 
 ```
 .
-├── base  # contains boilerplate base blueprints for osbuild-composer
+├── base
 │   ├── base_jinja.toml.j2
-│   └── base.toml
-├── config  # Contains different config modules which can be packaged into <image_name>-config.rpm
-│   └── demo
-│       └── etc
-│           └── sample_file
+│   ├── base.toml
+│   └── base.toml.j2
 ├── kickstart
 │   └── microshift-single-disk.ks.j2
-├── modules  # Add-on modules to be incorporated in the resulting blueprint
-│   ├── mod_development.toml
-│   ├── mod_microshift_images.toml
-│   ├── profile_demo.toml  # profiles are just like other modules, but can contain conflicting information
-│   └── profile_demo.toml.j2
+├── modules
+│   ├── development
+│   │   └── development.toml.j2
+│   └── guestbook
+│       ├── files
+│       │   └── usr
+│       │       └── lib
+│       │           └── microshift
+│       │               └── manifests.d
+│       │                   └── guestbook
+│       │                       ├── frontend-deployment.yaml
+│       │                       ├── frontend-service.yaml
+│       │                       ├── kustomization.yaml
+│       │                       ├── namespace.yaml
+│       │                       ├── README.md
+│       │                       ├── redis-follower-deployment.yaml
+│       │                       ├── redis-follower-service.yaml
+│       │                       ├── redis-leader-deployment.yaml
+│       │                       └── redis-leader-service.yaml
+│       └── guestbook.toml
 └── README.md
 ```
 

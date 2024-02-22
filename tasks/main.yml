@@ -6,7 +6,6 @@
       - 'git'
       - 'rpm-build'
     state: 'present'
-  become: true
 
 - name: 'Compose blueprint files from source'
   when: edge_compose_blueprint | bool
