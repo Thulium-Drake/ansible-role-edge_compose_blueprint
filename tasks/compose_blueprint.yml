@@ -89,7 +89,7 @@
     file_type: 'any'
   register: 'module_components'
 
-- name: 'Add services to list'
+- name: 'Add enabled services to list'
   ansible.builtin.set_fact:
     blueprint_enabled_services: "{{ (blueprint_enabled_services | default([])) + lookup('ansible.builtin.file', module['path']) | split('\n') }}"
   when: module['path'].endswith('services_enable')
@@ -97,9 +97,22 @@
   loop_control:
     loop_var: 'module'
 
-- name: 'Bla'
-  ansible.builtin.debug:
-    var: blueprint_enabled_services
+- name: 'Add disabled services to list'
+  ansible.builtin.set_fact:
+    blueprint_disabled_services: "{{ (blueprint_disabled_services | default([])) + lookup('ansible.builtin.file', module['path']) | split('\n') }}"
+  when: module['path'].endswith('services_disable')
+  loop: "{{ module_components['files'] | default([]) }}"
+  loop_control:
+    loop_var: 'module'
+
+- name: 'Render blueprint services snippet'
+  ansible.builtin.copy:
+    content: |
+      [customizations.services]
+      enabled = "{{ blueprint_enabled_services | default([]) | to_json }}"
+      disabled = "{{ blueprint_disabled_services | default([]) | to_json }}"
+    dest: "/tmp/compose_{{ blueprint['name'] }}/toml/00_services.toml"
+    mode: '0644'
 
 - name: 'Bla'
   ansible.builtin.meta: end_play
