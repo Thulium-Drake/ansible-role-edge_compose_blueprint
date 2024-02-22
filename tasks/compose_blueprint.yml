@@ -32,7 +32,7 @@
       ansible.builtin.shell: |
         set -o pipefail
         cd /tmp/compose_{{ blueprint['name'] }}/microshift
-        dnf download microshift-release-info-{{ blueprint['microshift_version'] }}
+        dnf download microshift-release-info-{{ blueprint['microshift_version'] }} 1>&2
         rpm2cpio microshift-release-info-{{ blueprint['microshift_version'] }}-*.rpm | \
         cpio --to-stdout -vi ./usr/share/microshift/release/release-x86_64.json
       register: 'microshift_rpm_contents'
