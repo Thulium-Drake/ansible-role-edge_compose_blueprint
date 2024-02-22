@@ -92,6 +92,10 @@
 - name: 'Add services to list'
   ansible.builtin.set_fact:
     blueprint_enabled_services: "{{ (blueprint_enabled_services | default([])) + lookup('ansible.builtin.file', module['path']) | split('\n') }}"
+  when: module['path'].endswith('services_enable')
+  loop: "{{ module_components['files'] | default([]) }}"
+  loop_control:
+    loop_var: 'module'
 
 - name: 'Bla'
   ansible.builtin.debug:
