@@ -18,5 +18,5 @@ MENU COLOR border *;* #00000000 #00000000 none
 LABEL Install image: {{ blueprint['name'] }}
   MENU Install image: {{ blueprint['name'] }}
   KERNEL vmlinuz
-  APPEND initrd=initrd.img root=live:http://{{ edge_compose_blueprint_deployment_server }}/install.img inst.ks=http://{{ edge_compose_blueprint_deployment_server }}/{{ blueprint['name'] }}/install.ks
+  APPEND initrd=initrd.img root=live:{{ edge_compose_blueprint_repository_baseurl }}/install.img inst.ks={{ edge_compose_blueprint_repository_baseurl }}/{{ blueprint['name'] }}/install.ks
 {% endfor %}

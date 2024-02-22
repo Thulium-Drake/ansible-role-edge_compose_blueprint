@@ -17,6 +17,7 @@
         version: "{{ edge_compose_blueprint_git_version }}"
         key_file: "{{ edge_compose_blueprint_git_sshkey | default(omit, true) }}"
         update: true
+      register: 'git_repo_information'
 
     - name: 'Render blueprints and kickstart files'
       ansible.builtin.include_tasks: 'tasks/compose_blueprint.yml'

@@ -1,4 +1,5 @@
 ---
+# yamllint disable rule:line-length
 - name: 'Ensure temporary work directories'
   ansible.builtin.file:
     path: "/tmp/compose_{{ blueprint['name'] }}/{{ directory }}"
@@ -109,7 +110,6 @@
       version = "*"
     dest: "/tmp/compose_{{ blueprint['name'] }}/toml/00_config_rpm.toml"
     mode: '0644'
-  when: blueprint['modules'] is defined
 
 - name: 'Assemble blueprint file'
   ansible.builtin.assemble:
@@ -131,49 +131,68 @@
     mode: '0644'
   when: "'.ks.j2' not in blueprint['kickstart_profile']"
 
-- name: 'Build config RPM'
-  when: blueprint['modules'] is defined
-  block:
-    - name: 'Assemble RPM config module tree'
-      ansible.builtin.copy:
-        src: "{{ config_module['path'] }}/"
-        dest: "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-1.x86_64/"
-        mode: '0644'
-      when: config_module['path'].endswith('files')
-      loop: "{{ module_components['files'] | default([]) }}"
-      loop_control:
-        loop_var: 'config_module'
+- name: 'Ensure directory for image release information'
+  ansible.builtin.file:
+    path: "{{ image_release_dir }}"
+    state: 'directory'
+    mode: '0755'
+  loop:
+    - "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-1.x86_64/usr/etc/{{ edge_compose_blueprint_vendor }}"
+    - "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-1.x86_64/etc/ansible/facts.d"
+  loop_control:
+    loop_var: 'image_release_dir'
 
-    - name: 'Collect files'
-      ansible.builtin.find:
-        paths: "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT"
-        recurse: true
-      register: 'config_rpm_files'
+- name: 'Ensure image release information'
+  ansible.builtin.template:
+    src: 'image_release.ini.j2'
+    dest: "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-1.x86_64/usr/etc/{{ edge_compose_blueprint_vendor }}/image_release.fact"
+    mode: '0644'
 
-    - name: 'Render RPM Spec file'
-      ansible.builtin.template:
-        src: 'image_config.spec.j2'
-        dest: "/tmp/compose_{{ blueprint['name'] }}/rpm/SPECS/image_config.spec"
-        mode: '0644'
+- name: 'Add symlink from /etc/ansible/facts.d to release information'
+  ansible.builtin.file:
+    path: "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-1.x86_64/etc/ansible/facts.d/image_release.fact"
+    src: "/usr/etc/{{ edge_compose_blueprint_vendor }}/image_release.fact"
 
-    - name: 'Build RPM'  # The RPM macro cannot use $PWD, as the envvar does not change when using chdir
-      ansible.builtin.command: rpmbuild --define "_topdir /tmp/compose_{{ blueprint['name'] }}/rpm" -v -bb SPECS/image_config.spec
-      args:
-        chdir: "/tmp/compose_{{ blueprint['name'] }}/rpm"
-        creates: "/tmp/compose_{{ blueprint['name'] }}/rpm/RPMS/x86_64/{{ blueprint['name'] }}-config-1.0-1.x86_64.rpm"
+- name: 'Assemble RPM config module tree'
+  ansible.builtin.copy:
+    src: "{{ config_module['path'] }}/"
+    dest: "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-1.x86_64/"
+    mode: '0644'
+  when: config_module['path'].endswith('files')
+  loop: "{{ module_components['files'] | default([]) }}"
+  loop_control:
+    loop_var: 'config_module'
 
-    - name: 'Copy RPM to output directory'
-      ansible.builtin.copy:
-        src: "/tmp/compose_{{ blueprint['name'] }}/rpm/RPMS/x86_64/{{ blueprint['name'] }}-config-1.0-1.x86_64.rpm"
-        dest: "/var/www/html/config-rpms/{{ blueprint['name'] }}-config-1.0-1.x86_64.rpm"
-        mode: '0644'
-        remote_src: true
+- name: 'Collect files'
+  ansible.builtin.find:
+    paths: "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT"
+    recurse: true
+  register: 'config_rpm_files'
 
-    - name: 'Update config RPM repository metadata'
-      ansible.builtin.command: /usr/bin/createrepo .
-      args:
-        chdir: '/var/www/html/config-rpms'
-      changed_when: true
+- name: 'Render RPM Spec file'
+  ansible.builtin.template:
+    src: 'image_config.spec.j2'
+    dest: "/tmp/compose_{{ blueprint['name'] }}/rpm/SPECS/image_config.spec"
+    mode: '0644'
+
+- name: 'Build RPM'  # The RPM macro cannot use $PWD, as the envvar does not change when using chdir
+  ansible.builtin.command: rpmbuild --define "_topdir /tmp/compose_{{ blueprint['name'] }}/rpm" -v -bb SPECS/image_config.spec
+  args:
+    chdir: "/tmp/compose_{{ blueprint['name'] }}/rpm"
+    creates: "/tmp/compose_{{ blueprint['name'] }}/rpm/RPMS/x86_64/{{ blueprint['name'] }}-config-1.0-1.x86_64.rpm"
+
+- name: 'Copy RPM to output directory'
+  ansible.builtin.copy:
+    src: "/tmp/compose_{{ blueprint['name'] }}/rpm/RPMS/x86_64/{{ blueprint['name'] }}-config-1.0-1.x86_64.rpm"
+    dest: "/var/www/html/config-rpms/{{ blueprint['name'] }}-config-1.0-1.x86_64.rpm"
+    mode: '0644'
+    remote_src: true
+
+- name: 'Update config RPM repository metadata'
+  ansible.builtin.command: /usr/bin/createrepo .
+  args:
+    chdir: '/var/www/html/config-rpms'
+  changed_when: true
 
 - name: 'Clean up temporary work directory'
   ansible.builtin.file:
