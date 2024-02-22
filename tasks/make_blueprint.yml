@@ -9,7 +9,9 @@
 
 - name: 'Ensure old blueprint deleted from osbuild-composer'
   ansible.builtin.command: /usr/bin/composer-cli blueprints delete {{ image['name'] }}
+  register: 'delete_blueprint'
   changed_when: true  # Command does not tell you when something has changed
+  failed_when: false  # Command only fails when a blueprint cannot be found
 
 - name: 'Import blueprint to osbuild-composer'
   ansible.builtin.command: /usr/bin/composer-cli blueprints push /etc/osbuild-composer/blueprints/{{ image['name'] }}.toml
@@ -37,7 +39,7 @@
   block:
     - name: 'Start build'
       ansible.builtin.command: |
-        /usr/bin/composer-cli -j compose start-ostree --ref image['ref'] --url http://localhost/{{ image['name'] }}/repo {{ image['name'] }} edge-commit
+        /usr/bin/composer-cli -j compose start-ostree --ref {{ image['ref'] }} --url http://localhost/{{ image['name'] }}/repo {{ image['name'] }} edge-commit
       register: 'compose_command'
       changed_when: true  # This will always build a new image
 
