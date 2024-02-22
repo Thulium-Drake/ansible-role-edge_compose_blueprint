@@ -1,0 +1,70 @@
+---
+- name: 'Make a list of all available blueprints'
+  ansible.builtin.find:
+    paths: '/etc/osbuild-composer/blueprints'
+    patterns: '*.toml'
+    file_type: 'file'
+  register: 'edge_image_builder_blueprint_files'
+
+- name: 'Collect blueprint filenames'
+  ansible.builtin.set_fact:
+    edge_image_builder_blueprints: "{{ (edge_image_builder_blueprints | default([])) + [item | basename | regex_replace('.toml', '')] }}"
+  loop: "{{ edge_image_builder_blueprint_files['files'] | map(attribute='path') }}"
+
+- name: 'Build blueprint'
+  ansible.builtin.include_tasks: 'tasks/make_blueprint.yml'
+  loop: "{{ edge_image_builder_blueprints }}"
+  loop_control:
+    loop_var: 'blueprint'
+  when: edge_image_builder_make_blueprints | bool
+
+- name: 'Copy kickstart file'
+  ansible.builtin.copy:
+    src: "/etc/osbuild-composer/blueprints/{{ blueprint }}.ks"
+    dest: "/var/www/html/{{ blueprint }}/install.ks"
+    owner: 'root'
+    group: 'root'
+    mode: '0644'
+    remote_src: true
+  loop: "{{ edge_image_builder_blueprints }}"
+  loop_control:
+    loop_var: 'blueprint'
+
+- name: 'Update PXEboot menu'
+  ansible.builtin.template:
+    src: "{{ pxeboot['name'] }}"
+    dest: "/var/lib/tftpboot/{{ pxeboot['dest'] }}"
+    owner: 'root'
+    group: 'root'
+    mode: '0644'
+  loop:
+    - name: 'pxelinux.cfg.j2'
+      dest: 'pxelinux.cfg/default'
+    - name: 'grub.cfg.j2'
+      dest: 'grub.cfg'
+  loop_control:
+    loop_var: 'pxeboot'
+
+- name: 'List config RPMs'
+  ansible.builtin.find:
+    paths: '/etc/osbuild-composer/blueprints'
+    patterns: '*.rpm'
+  register: 'config_rpms'
+
+- name: 'Copy config RPMs'
+  ansible.builtin.copy:
+    src: "{{ config_rpm['path'] }}"
+    dest: '/var/www/html/config-rpms/'
+    owner: 'root'
+    group: 'root'
+    mode: '0644'
+    remote_src: true
+  loop: "{{ config_rpms['files'] }}"
+  loop_control:
+    loop_var: 'config_rpm'
+
+- name: 'Update config RPM repository metadata'
+  ansible.builtin.command: /usr/bin/createrepo .
+  args:
+    chdir: '/var/www/html/config-rpms'
+  changed_when: true

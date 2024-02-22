@@ -1,0 +1,102 @@
+---
+- name: 'Ensure tempdir'
+  ansible.builtin.file:
+    path: '/var/cache/edge_result'
+    state: 'directory'
+    group: 'root'
+    mode: '0700'
+  changed_when: false  # The creation of this dir is not significant
+
+- name: 'Ensure old blueprint deleted from osbuild-composer'
+  ansible.builtin.command: /usr/bin/composer-cli blueprints delete {{ image['name'] }}
+  changed_when: true  # Command does not tell you when something has changed
+
+- name: 'Import blueprint to osbuild-composer'
+  ansible.builtin.command: /usr/bin/composer-cli blueprints push /etc/osbuild-composer/blueprints/{{ image['name'] }}.toml
+  changed_when: true  # Command does not tell you when something has changed
+
+- name: 'Check if this is an update of an existing image'
+  ansible.builtin.stat:
+    path: "/var/www/html/{{ image['name'] }}/repo"
+  register: 'edge_image_repo'
+
+- name: 'Build edge-commit'
+  when: not edge_image_repo['stat']['exists']
+  block:
+    - name: 'Start build'
+      ansible.builtin.command: /usr/bin/composer-cli -j compose start {{ image['name'] }} edge-commit
+      register: 'compose_command'
+      changed_when: true  # This will always build a new image
+
+    - name: 'Process output'
+      ansible.builtin.set_fact:
+        build_info: "{{ compose_command['stdout'] | from_json }}"
+
+- name: 'Build update edge-commit'
+  when: edge_image_repo['stat']['exists']
+  block:
+    - name: 'Start build'
+      ansible.builtin.command: |
+        /usr/bin/composer-cli -j compose start-ostree --ref image['ref'] --url http://localhost/{{ image['name'] }}/repo {{ image['name'] }} edge-commit
+      register: 'compose_command'
+      changed_when: true  # This will always build a new image
+
+    - name: 'Process output'
+      ansible.builtin.set_fact:
+        build_info: "{{ compose_command['stdout'] | from_json }}"
+
+- name: 'Wait for osbuild-composer to compile image'
+  ansible.builtin.shell: |
+    set -o pipefail
+    /usr/bin/composer-cli compose list | grep {{ build_info[0]['body']['build_id'] }}
+  register: 'build_status'
+  until:
+    - "'RUNNING' not in build_status['stdout']"
+    - "'WAITING' not in build_status['stdout']"
+  retries: 60
+  delay: 30
+  changed_when: "'FINISHED' in build_status['stdout']"
+  failed_when: "'FAILED' in build_status['stdout']"
+
+- name: 'Download result'
+  ansible.builtin.command:
+    cmd: "/usr/bin/composer-cli compose image {{ build_info[0]['body']['build_id'] }}"
+    chdir: '/var/cache/edge_result'
+    creates: "/var/cache/edge_result/{{ build_info[0]['body']['build_id'] }}-commit.tar"
+
+- name: 'Ensure destination directory'
+  ansible.builtin.file:
+    path: "/var/www/html/{{ image['name'] }}"
+    state: 'directory'
+    owner: 'root'
+    group: 'root'
+    mode: '0755'
+
+- name: 'Extract image to webserver'
+  ansible.builtin.unarchive:
+    src: "/var/cache/edge_result/{{ build_info[0]['body']['build_id'] }}-commit.tar"
+    dest: "/var/www/html/{{ image['name'] }}"
+    remote_src: true
+  when: not edge_image_repo['stat']['exists']
+
+- name: 'Extract and apply update'
+  when: edge_image_repo['stat']['exists']
+  block:
+    - name: 'Extract image'
+      ansible.builtin.unarchive:
+        src: "/var/cache/edge_result/{{ build_info[0]['body']['build_id'] }}-commit.tar"
+        dest: '/var/cache/edge_result'
+        remote_src: true
+
+    - name: 'Apply update to existing ostree on webserver'
+      ansible.builtin.shell: |
+        /usr/bin/ostree --repo=/var/www/html/{{ image['name'] }}/repo pull-local /var/cache/edge_result/repo
+        /usr/bin/ostree summary --update --repo=/var/www/html/{{ image['name'] }}/repo
+        /usr/sbin/restorecon -r /var/www/html/{{ image['name'] }}/repo
+      changed_when: true
+
+- name: 'Ensure tempdir absent'
+  ansible.builtin.file:
+    path: '/var/cache/edge_result'
+    state: 'absent'
+  changed_when: false  # The deletion of this dir is not significant

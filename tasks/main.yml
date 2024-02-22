@@ -8,15 +8,29 @@
     state: 'present'
   become: true
 
-- name: 'Ensure git checkout up to date'
-  ansible.builtin.git:
-    repo: "{{ edge_compose_blueprint_git_repo }}"
-    dest: "{{ edge_compose_blueprint_checkout }}"
-    version: "{{ edge_compose_blueprint_git_version }}"
-    update: true
+- name: 'Compose blueprint files from source'
+  when: edge_compose_blueprint | bool
+  block:
+    - name: 'Ensure git checkout up to date'
+      ansible.builtin.git:
+        repo: "{{ edge_compose_blueprint_git_repo }}"
+        dest: "{{ edge_compose_blueprint_checkout }}"
+        version: "{{ edge_compose_blueprint_git_version }}"
+        update: true
 
-- name: 'Render blueprints and kickstart files'
+    - name: 'Render blueprints and kickstart files'
+      ansible.builtin.include_tasks: 'tasks/compose_blueprint.yml'
+      loop: "{{ edge_compose_blueprint_images }}"
+      loop_control:
+        loop_var: 'blueprint'
+
+- name: 'Build images with osbuild-composer'
+  when: edge_compose_blueprint_build | bool
   ansible.builtin.include_tasks: 'tasks/compose_blueprint.yml'
   loop: "{{ edge_compose_blueprint_images }}"
   loop_control:
     loop_var: 'image'
+
+- name: 'Update deployment server configuration'
+  when: edge_compose_blueprint_update_deployment_server | bool
+  ansible.builtin.include_tasks: 'tasks/update_deployment_server.yml'

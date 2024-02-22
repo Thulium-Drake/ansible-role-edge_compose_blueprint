@@ -1,11 +1,13 @@
 ---
+## Role actions to perform
+edge_compose_blueprint: true
+edge_compose_blueprint_build: true
+edge_compose_blueprint_update_deployment_server: true
+
 # Source repository with blueprint components
 edge_compose_blueprint_git_repo: 'ssh://git.example.com/my_rh_edge_blueprints'
 edge_compose_blueprint_git_version: 'master'
 edge_compose_blueprint_checkout: '/home/ansible/rh_edge_blueprints'
-
-# Directory where to store the results on the Ansible controller
-edge_compose_blueprint_output_dir: '/tmp/compose_blueprints_output'
 
 # Blueprint definitions
 # If required you can also add extra variables here that are used in the jinja templates called for this blueprint
