@@ -28,7 +28,7 @@
         set -o pipefail
         cd /tmp/compose_{{ image['name'] }}/microshift
         dnf download microshift-release-info-{{ image['microshift_version'] }}
-        rpm2cpio microshift-release-info-{{ edge_microshift_ocp_version }}-*.rpm | \
+        rpm2cpio microshift-release-info-{{ image['microshift_version'] }}-*.rpm | \
         cpio --to-stdout -vi ./usr/share/microshift/release/release-x86_64.json
       register: 'microshift_rpm_contents'
       changed_when: false  # This task collects information
@@ -61,13 +61,37 @@
     mode: '0644'
   when: "'.toml.j2' not in image['base']"
 
+- name: 'Collect module blueprint components'
+  ansible.builtin.find:
+    paths: >-
+      {%- set module_paths = [] -%}
+      {%- for module in image['modules'] | default([]) -%}
+      {%-   set line = edge_compose_blueprint_checkout + '/modules/' + module -%}
+      {%-   set _ = module_paths.append(line) -%}
+      {%- endfor -%}
+      {{ module_paths }}
+    depth: 1
+    file_type: 'any'
+  register: 'module_components'
+
 - name: 'Render blueprint module templates'
   ansible.builtin.template:
-    src: "{{ edge_compose_blueprint_checkout }}/modules/{{ module }}"
-    dest: "/tmp/compose_{{ image['name'] }}/toml/{{ module_idx }}_{{ module | regex_replace('.j2.', '') }}"
+    src: "{{ module['path'] }}"
+    dest: "/tmp/compose_{{ image['name'] }}/toml/{{ module_idx }}_{{ module['path'] | basename | regex_replace('.j2', '') }}"
     mode: '0644'
-  when: "'.toml.j2' in module"
-  loop: "{{ image['modules'] | default([]) }}"
+  when: module['path'].endswith('.toml.j2')
+  loop: "{{ module_components['files'] | default([]) }}"
+  loop_control:
+    loop_var: 'module'
+    index_var: 'module_idx'
+
+- name: 'Copy blueprint modules'
+  ansible.builtin.copy:
+    src: "{{ module['path'] }}"
+    dest: "/tmp/compose_{{ image['name'] }}/toml/{{ module_idx }}_{{ module['path'] | basename }}"
+    mode: '0644'
+  when: module['path'].endswith('.toml')
+  loop: "{{ module_components['files'] | default([]) }}"
   loop_control:
     loop_var: 'module'
     index_var: 'module_idx'
@@ -80,18 +104,7 @@
       version = "*"
     dest: "/tmp/compose_{{ image['name'] }}/toml/00_config_rpm.toml"
     mode: '0644'
-  when: image['config_rpm_modules'] is defined
-
-- name: 'Copy blueprint modules'
-  ansible.builtin.copy:
-    src: "{{ edge_compose_blueprint_checkout }}/modules/{{ module }}"
-    dest: "/tmp/compose_{{ image['name'] }}/toml/{{ module_idx }}_{{ module }}"
-    mode: '0644'
-  when: "'.toml.j2' not in module"
-  loop: "{{ image['modules'] }}"
-  loop_control:
-    loop_var: 'module'
-    index_var: 'module_idx'
+  when: image['modules'] is defined
 
 - name: 'Assemble blueprint file'
   ansible.builtin.assemble:
@@ -114,14 +127,15 @@
   when: "'.ks.j2' not in image['kickstart_profile']"
 
 - name: 'Build config RPM'
-  when: image['config_rpm_modules'] is defined
+  when: image['modules'] is defined
   block:
     - name: 'Assemble RPM config module tree'
       ansible.builtin.copy:
-        src: "{{ edge_compose_blueprint_checkout }}/config/{{ config_module }}/"
+        src: "{{ config_module['path'] }}/"
         dest: "/tmp/compose_{{ image['name'] }}/rpm/BUILDROOT/{{ image['name'] }}-config-1.0-1.x86_64/"
         mode: '0644'
-      loop: "{{ image['config_rpm_modules'] }}"
+      when: config_module['path'].endswith('files')
+      loop: "{{ module_components['files'] | default([]) }}"
       loop_control:
         loop_var: 'config_module'
 
