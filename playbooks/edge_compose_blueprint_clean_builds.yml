@@ -1,0 +1,18 @@
+---
+- name: 'Clean Edge Image builds'
+  hosts: 'edge_image_builder'
+  gather_facts: false
+  tasks:
+    - name: 'Collect all completed or failed compose builds'
+      ansible.builtin.shell: |
+        set -o pipefail
+        /usr/bin/composer-cli compose status | grep -v RUNNING | cut -d' ' -f1 | tail -n+2
+      register: 'compose_builds'
+      changed_when: false
+
+    - name: 'Delete all completed builds'
+      ansible.builtin.command: /usr/bin/composer-cli compose delete {{ build_id }}
+      loop: "{{ compose_builds['stdout_lines'] }}"
+      loop_control:
+        loop_var: 'build_id'
+      changed_when: true
