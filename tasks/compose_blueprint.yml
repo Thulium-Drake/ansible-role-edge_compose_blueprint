@@ -60,7 +60,7 @@
     - name: 'Add microshift to list of services to enable'
       ansible.builtin.set_fact:
         blueprint_enabled_services:
-          - 'microshift'
+          - 'microshift.service'
 
 - name: 'Render base blueprint template'
   ansible.builtin.template:
@@ -109,8 +109,8 @@
   ansible.builtin.copy:
     content: |
       [customizations.services]
-      enabled = "{{ blueprint_enabled_services | default([]) | to_json }}"
-      disabled = "{{ blueprint_disabled_services | default([]) | to_json }}"
+      enabled = {{ blueprint_enabled_services | default([]) | to_json }}
+      disabled = {{ blueprint_disabled_services | default([]) | to_json }}
     dest: "/tmp/compose_{{ blueprint['name'] }}/toml/00_services.toml"
     mode: '0644'
 
