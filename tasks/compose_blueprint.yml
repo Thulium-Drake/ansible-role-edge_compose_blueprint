@@ -133,14 +133,14 @@
 
 - name: 'Ensure directory for image release information'
   ansible.builtin.file:
-    path: "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-1.x86_64/usr/etc/vendor"
+    path: "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-1.x86_64/usr/lib/vendor"
     state: 'directory'
     mode: '0755'
 
 - name: 'Ensure image release information'
   ansible.builtin.template:
     src: 'image_release.ini.j2'
-    dest: "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-1.x86_64/usr/etc/vendor/image_release.fact"
+    dest: "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-1.x86_64/usr/lib/vendor/image_release.fact"
     mode: '0644'
 
 - name: 'Assemble RPM config module tree'
