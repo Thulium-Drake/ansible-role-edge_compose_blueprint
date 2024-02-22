@@ -22,6 +22,8 @@
   loop:
     - '/var/www/html/config-rpms'
     - "/var/www/html/{{ blueprint['name'] }}"
+  loop_control:
+    loop_var: 'directory'
 
 - name: 'Get microshift container image URIs'
   when: blueprint['microshift_version'] is defined
