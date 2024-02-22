@@ -133,14 +133,9 @@
 
 - name: 'Ensure directory for image release information'
   ansible.builtin.file:
-    path: "{{ image_release_dir }}"
+    path: "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-1.x86_64/usr/etc/vendor"
     state: 'directory'
     mode: '0755'
-  loop:
-    - "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-1.x86_64/usr/etc/vendor"
-    - "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-1.x86_64/etc/ansible/facts.d"
-  loop_control:
-    loop_var: 'image_release_dir'
 
 - name: 'Ensure image release information'
   ansible.builtin.template:
