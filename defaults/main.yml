@@ -24,7 +24,8 @@ edge_compose_blueprint_images:
     ref: 'rhel/9/x86_64/edge'
     modules:             # Optional, extra directories with either TOML or RPM config trees
       - 'module'
-    ssh_key: 'ssh-ed25519 AAAA.... ansible@example.nl'  # If not defined will fallback to edge_compose_blueprint_ssh_key
+    ssh_key:
+      - 'ssh-ed25519 AAAA.... ansible@example.nl'  # If not defined will fallback to edge_compose_blueprint_ssh_key
     kickstart_profile: 'microshift-single-disk.ks.j2'
     kickstart_validate: false
 
@@ -35,4 +36,5 @@ edge_compose_blueprint_pull_secret_url: 'http://repo.example.nl/pull-secret.json
 
 # Base URL where the images are stored, the image, do not include image name
 edge_compose_blueprint_repository_baseurl: 'http://repo.example.nl'
-edge_compose_blueprint_ssh_key: 'ssh-ed25519 AAAA.... ansible@example.nl'
+edge_compose_blueprint_ssh_key:
+  - 'ssh-ed25519 AAAA.... ansible@example.nl'
