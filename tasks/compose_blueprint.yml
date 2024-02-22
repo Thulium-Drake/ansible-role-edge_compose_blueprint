@@ -167,6 +167,7 @@
         src: "/tmp/compose_{{ blueprint['name'] }}/rpm/RPMS/x86_64/{{ blueprint['name'] }}-config-1.0-1.x86_64.rpm"
         dest: "/var/www/html/config-rpms/{{ blueprint['name'] }}-config-1.0-1.x86_64.rpm"
         mode: '0644'
+        remote_src: true
 
     - name: 'Update config RPM repository metadata'
       ansible.builtin.command: /usr/bin/createrepo .

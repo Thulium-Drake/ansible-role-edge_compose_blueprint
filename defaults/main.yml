@@ -2,7 +2,6 @@
 ## Role actions to perform
 edge_compose_blueprint: true
 edge_compose_blueprint_build: true
-edge_compose_blueprint_update_deployment_server: true
 
 # Source repository with blueprint components
 edge_compose_blueprint_git_repo: 'ssh://git.example.com/my_rh_edge_blueprints'
@@ -10,6 +9,8 @@ edge_compose_blueprint_git_version: 'master'
 edge_compose_blueprint_checkout: '/home/ansible/rh_edge_blueprints'
 # Path with the key
 edge_compose_blueprint_git_sshkey: ''
+
+edge_compose_blueprint_deployment_server: '192.168.1.2'
 
 # Blueprint definitions
 # If required you can also add extra variables here that are used in the jinja templates called for this blueprint
