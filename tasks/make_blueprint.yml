@@ -55,8 +55,8 @@
   until:
     - "'RUNNING' not in build_status['stdout']"
     - "'WAITING' not in build_status['stdout']"
-  retries: 60
-  delay: 30
+  retries: "{{ edge_compose_blueprint_build_timeout }}"
+  delay: 60
   changed_when: "'FINISHED' in build_status['stdout']"
   failed_when: "'FAILED' in build_status['stdout']"
 

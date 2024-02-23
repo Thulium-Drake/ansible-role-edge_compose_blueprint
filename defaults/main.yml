@@ -3,6 +3,9 @@
 edge_compose_blueprint: true
 edge_compose_blueprint_build: true
 
+# Amount of minutes to wait for build to complete
+edge_compose_blueprint_build_timeout: '30'
+
 # Source repository with blueprint components
 edge_compose_blueprint_git_repo: 'ssh://git.example.com/my_rh_edge_blueprints'
 edge_compose_blueprint_git_version: 'master'
