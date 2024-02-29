@@ -23,29 +23,20 @@
   register: 'edge_image_repo'
 
 - name: 'Build edge-commit'
-  when: not edge_image_repo['stat']['exists']
-  block:
-    - name: 'Start build'
-      ansible.builtin.command: /usr/bin/composer-cli -j compose start {{ image['name'] }} edge-commit
-      register: 'compose_command'
-      changed_when: true  # This will always build a new image
+  ansible.builtin.command: >-
+    /usr/bin/composer-cli
+    -j
+    compose
+    start-ostree
+    {{ (edge_image_repo['stat']['exists']) | ternary(' --url http://localhost/' + image['name'] + '/repo', '') }}
+    --ref {{ image['ref'] }} {{ image['name'] }}
+    edge-commit
+  register: 'compose_command'
+  changed_when: true  # This will always build a new image
 
-    - name: 'Process output'
-      ansible.builtin.set_fact:
-        build_info: "{{ compose_command['stdout'] | from_json }}"
-
-- name: 'Build update edge-commit'
-  when: edge_image_repo['stat']['exists']
-  block:
-    - name: 'Start build'
-      ansible.builtin.command: |
-        /usr/bin/composer-cli -j compose start-ostree --ref {{ image['ref'] }} --url http://localhost/{{ image['name'] }}/repo {{ image['name'] }} edge-commit
-      register: 'compose_command'
-      changed_when: true  # This will always build a new image
-
-    - name: 'Process output'
-      ansible.builtin.set_fact:
-        build_info: "{{ compose_command['stdout'] | from_json }}"
+- name: 'Process output'
+  ansible.builtin.set_fact:
+    build_info: "{{ compose_command['stdout'] | from_json }}"
 
 - name: 'Wait for osbuild-composer to compile image'
   ansible.builtin.shell: |
