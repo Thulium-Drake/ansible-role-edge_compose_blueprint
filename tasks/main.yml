@@ -20,7 +20,9 @@
     edge_compose_blueprint_distro_id: "{{ edge_compose_blueprint_distro_id_raw['stdout'] }}-{{ ansible_facts['distribution_major_version'] }}"
 
 - name: 'Compose blueprint files from source'
-  when: edge_compose_blueprint | bool
+  when:
+    - edge_compose_blueprint | bool
+    - image['distro'] == edge_compose_blueprint_distro_id
   block:
     - name: 'Ensure git checkout up to date'
       ansible.builtin.git:
