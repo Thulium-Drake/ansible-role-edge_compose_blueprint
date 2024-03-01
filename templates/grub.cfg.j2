@@ -4,7 +4,7 @@ set timeout=-1
 
 {% for blueprint in edge_compose_blueprint_images %}
 menuentry "Install image: {{ blueprint['name'] }}" {
-  linuxefi vmlinuz root=live:{{ edge_compose_blueprint_repository_baseurl }}/{{ blueprint['distro'] }}/install.img inst.ks={{ edge_compose_blueprint_repository_baseurl }}/{{ blueprint['name'] }}/install.ks
-  initrdefi initrd.img
+  linuxefi {{ blueprint['distro'] }}/vmlinuz root=live:{{ edge_compose_blueprint_repository_baseurl }}/{{ blueprint['distro'] }}/install.img inst.ks={{ edge_compose_blueprint_repository_baseurl }}/{{ blueprint['name'] }}/install.ks
+  initrdefi {{ blueprint['distro'] }}/initrd.img
 }
 {% endfor %}
