@@ -24,10 +24,10 @@ edge_compose_vendor: 'Thulium-Drake'
 #  optional: modules, ssh_key, microshift_version
 edge_compose_blueprint_images:
   - name: 'microshift'
-    distro: 'rhel-9'  # If this does not match the local build server id, the role assumes it's provided externally and will only update deployment server
-    microshift_version: '4.14.10'
+    distro: 'rhel-9'
     base: 'base.toml.j2'
     ref: 'rhel/9/x86_64/edge'
+    microshift_version: '4.14.10'
     modules:             # Optional, extra directories with either TOML or RPM config trees
       - 'module'
     ssh_key:
