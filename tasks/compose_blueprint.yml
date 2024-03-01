@@ -222,18 +222,3 @@
   ansible.builtin.file:
     path: "/tmp/compose_{{ blueprint['name'] }}"
     state: 'absent'
-
-- name: 'Update PXEboot menu'
-  ansible.builtin.template:
-    src: "{{ pxeboot['name'] }}"
-    dest: "/var/lib/tftpboot/{{ pxeboot['dest'] }}"
-    owner: 'root'
-    group: 'root'
-    mode: '0644'
-  loop:
-    - name: 'pxelinux.cfg.j2'
-      dest: 'pxelinux.cfg/default'
-    - name: 'grub.cfg.j2'
-      dest: 'grub.cfg'
-  loop_control:
-    loop_var: 'pxeboot'

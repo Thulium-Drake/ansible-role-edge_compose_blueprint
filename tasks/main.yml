@@ -7,6 +7,18 @@
       - 'rpm-build'
     state: 'present'
 
+- name: 'Get distro ID'
+  ansible.builtin.shell: |
+    set -o pipefail
+    . /etc/os-release
+    echo $ID
+  register: 'edge_compose_blueprint_distro_id_raw'
+  changed_when: false
+
+- name: 'Set fact for distro ID'
+  ansible.builtin.set_fact:
+    edge_compose_blueprint_distro_id: "{{ edge_compose_blueprint_distro_id_raw['stdout'] }}-{{ ansible_facts['distribution_major_version'] }}"
+
 - name: 'Compose blueprint files from source'
   when: edge_compose_blueprint | bool
   block:
@@ -26,8 +38,25 @@
         loop_var: 'blueprint'
 
 - name: 'Build images with osbuild-composer'
-  when: edge_compose_blueprint_build | bool
+  when:
+    - edge_compose_blueprint_build | bool
+    - image['distro'] == edge_compose_blueprint_distro_id
   ansible.builtin.include_tasks: 'tasks/make_blueprint.yml'
   loop: "{{ edge_compose_blueprint_images }}"
   loop_control:
     loop_var: 'image'
+
+- name: 'Update PXEboot menu'
+  ansible.builtin.template:
+    src: "{{ pxeboot['name'] }}"
+    dest: "/var/lib/tftpboot/{{ pxeboot['dest'] }}"
+    owner: 'root'
+    group: 'root'
+    mode: '0644'
+  loop:
+    - name: 'pxelinux.cfg.j2'
+      dest: 'pxelinux.cfg/default'
+    - name: 'grub.cfg.j2'
+      dest: 'grub.cfg'
+  loop_control:
+    loop_var: 'pxeboot'
