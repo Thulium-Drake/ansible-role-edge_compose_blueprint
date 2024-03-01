@@ -50,6 +50,9 @@
           name = "microshift"
           version = "{{ blueprint['microshift_version'] }}"
 
+          [[packages]]
+          name = "openshift-clients"
+
           {% for img in edge_microshift_info['images'] | dict2items %}
           [[containers]]
           source = "{{ img['value'] }}"
