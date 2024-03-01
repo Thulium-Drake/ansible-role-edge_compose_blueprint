@@ -22,7 +22,6 @@
 - name: 'Compose blueprint files from source'
   when:
     - edge_compose_blueprint | bool
-    - image['distro'] == edge_compose_blueprint_distro_id
   block:
     - name: 'Ensure git checkout up to date'
       ansible.builtin.git:
@@ -35,6 +34,7 @@
 
     - name: 'Render blueprints and kickstart files'
       ansible.builtin.include_tasks: 'tasks/compose_blueprint.yml'
+      when: blueprint['distro'] == edge_compose_blueprint_distro_id
       loop: "{{ edge_compose_blueprint_images }}"
       loop_control:
         loop_var: 'blueprint'
