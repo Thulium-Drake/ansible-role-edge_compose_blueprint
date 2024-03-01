@@ -31,6 +31,8 @@
         key_file: "{{ edge_compose_blueprint_git_sshkey | default(omit, true) }}"
         update: true
       register: 'git_repo_information'
+      become: false
+      delegate_to: 'localhost'  # Save on Controller to be able to render templates
 
     - name: 'Render blueprints and kickstart files'
       ansible.builtin.include_tasks: 'tasks/compose_blueprint.yml'

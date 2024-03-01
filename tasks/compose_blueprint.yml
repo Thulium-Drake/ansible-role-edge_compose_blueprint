@@ -90,6 +90,8 @@
       {{ module_paths }}
     depth: 1
     file_type: 'any'
+  delegate_to: 'localhost'  # This is on the Ansible Controller in the cache directory
+  become: false
   register: 'module_components'
 
 - name: 'Add enabled services to list'
