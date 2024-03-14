@@ -29,7 +29,9 @@
         loop_var: 'blueprint'
 
 - name: 'Build images with osbuild-composer'
-  when: edge_compose_blueprint_build | bool
+  when:
+    - edge_compose_blueprint_build | bool
+    - image['build_enabled'] | default(true) | bool
   ansible.builtin.include_tasks: 'tasks/make_blueprint.yml'
   loop: "{{ edge_compose_blueprint_images }}"
   loop_control:
