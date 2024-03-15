@@ -9,7 +9,7 @@
     - 'microshift'
     - 'toml'
     - 'rpm/BUILD'
-    - "rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-1.x86_64"
+    - "rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-{{ ansible_facts['date_time']['epoch'] }}.x86_64"
     - 'rpm/SPECS'
     - 'rpm/RPMS'
   loop_control:
@@ -172,14 +172,14 @@
 
 - name: 'Ensure directory for image release information'
   ansible.builtin.file:
-    path: "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-1.x86_64/usr/lib/vendor"
+    path: "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-{{ ansible_facts['date_time']['epoch'] }}.x86_64/usr/lib/vendor"
     state: 'directory'
     mode: '0755'
 
 - name: 'Ensure image release information'
   ansible.builtin.template:
     src: 'image_release.ini.j2'
-    dest: "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-1.x86_64/usr/lib/vendor/image_release.fact"
+    dest: "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-{{ ansible_facts['date_time']['epoch'] }}.x86_64/usr/lib/vendor/image_release.fact"
     mode: '0644'
 
 - name: 'Assemble RPM config module tree'
@@ -208,12 +208,12 @@
   ansible.builtin.command: rpmbuild --define "_topdir /tmp/compose_{{ blueprint['name'] }}/rpm" -v -bb SPECS/image_config.spec
   args:
     chdir: "/tmp/compose_{{ blueprint['name'] }}/rpm"
-    creates: "/tmp/compose_{{ blueprint['name'] }}/rpm/RPMS/x86_64/{{ blueprint['name'] }}-config-1.0-1.x86_64.rpm"
+    creates: "/tmp/compose_{{ blueprint['name'] }}/rpm/RPMS/x86_64/{{ blueprint['name'] }}-config-1.0-{{ ansible_facts['date_time']['epoch'] }}.x86_64.rpm"
 
 - name: 'Copy RPM to output directory'
   ansible.builtin.copy:
-    src: "/tmp/compose_{{ blueprint['name'] }}/rpm/RPMS/x86_64/{{ blueprint['name'] }}-config-1.0-1.x86_64.rpm"
-    dest: "/var/www/html/config-rpms/{{ blueprint['name'] }}-config-1.0-1.x86_64.rpm"
+    src: "/tmp/compose_{{ blueprint['name'] }}/rpm/RPMS/x86_64/{{ blueprint['name'] }}-config-1.0-{{ ansible_facts['date_time']['epoch'] }}.x86_64.rpm"
+    dest: "/var/www/html/config-rpms/{{ blueprint['name'] }}-config-1.0-{{ ansible_facts['date_time']['epoch'] }}.x86_64.rpm"
     mode: '0644'
     remote_src: true
 

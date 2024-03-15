@@ -16,7 +16,7 @@ ln -sf /usr/lib/vendor/image_release.fact ${RPM_BUILD_ROOT}/etc/ansible/facts.d/
 %files
 /etc/ansible/facts.d/image_release.fact
 {% for file in config_rpm_files['files'] %}
-{{ file['path'] | regex_replace('/tmp/compose_' + blueprint['name'] + '/rpm/BUILDROOT/' + blueprint['name'] + '-config-1.0-1.x86_64', '') }}
+{{ file['path'] | regex_replace('/tmp/compose_' + blueprint['name'] + '/rpm/BUILDROOT/' + blueprint['name'] + '-config-1.0-' + ansible_facts['date_time']['epoch'] + '.x86_64', '') }}
 {% endfor %}
 
 %changelog
