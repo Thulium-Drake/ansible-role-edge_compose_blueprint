@@ -1,6 +1,6 @@
 Name:           {{ blueprint['name'] }}-config
 Version:        1.0
-Release:        1
+Release:        {{ ansible_facts['date_time']['epoch'] }}
 Summary:        Configuration RPM generated for Device Edge blueprint {{ blueprint['name'] }}
 BuildArch:      x86_64
 License:        MIT

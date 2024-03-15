@@ -27,6 +27,7 @@
       loop: "{{ edge_compose_blueprint_images }}"
       loop_control:
         loop_var: 'blueprint'
+      when: blueprint['build_enabled'] | default(true) | bool
 
 - name: 'Build images with osbuild-composer'
   when:
