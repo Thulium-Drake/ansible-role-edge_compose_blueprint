@@ -88,6 +88,10 @@
         /usr/sbin/restorecon -r /var/www/html/{{ image['name'] }}/repo
       changed_when: true
 
+    - name: 'Delete completed build'
+      ansible.builtin.command: /usr/bin/composer-cli compose delete {{ build_info[0]['body']['build_id'] }}
+      changed_when: true
+
 - name: 'Ensure tempdir absent'
   ansible.builtin.file:
     path: '/var/cache/edge_result'
