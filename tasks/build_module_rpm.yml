@@ -1,0 +1,39 @@
+---
+# yamllint disable rule:line-length
+- name: 'Check for RPM Spec snippet'
+  ansible.builtin.stat:
+    path: "{{ edge_compose_blueprint_checkout }}/modules/{{ module_name }}/{{ module_name }}.specsnip"
+  register: 'module_has_spec_snippet'
+  delegate_to: 'localhost'
+
+- name: 'Check for RPM module files'
+  ansible.builtin.stat:
+    path: "{{ edge_compose_blueprint_checkout }}/modules/{{ module_name }}/files"
+  register: 'module_has_files'
+  delegate_to: 'localhost'
+
+- name: 'Copy module files to RPM BUILDROOT'
+  ansible.builtin.copy:
+    src: "{{ edge_compose_blueprint_checkout }}/modules/{{ module_name }}/files/"
+    dest: "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-{{ module_name }}-1.0-{{ ansible_facts['date_time']['epoch'] }}.x86_64/"
+    mode: 'preserve'
+  when: module_has_files['stat']['exists']
+
+- name: 'Inventory module files'
+  ansible.builtin.find:
+    paths: "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-{{ module_name }}-1.0-{{ ansible_facts['date_time']['epoch'] }}.x86_64/"
+    file_type: 'file'
+    recurse: true
+  register: 'module_rpm_files'
+
+- name: 'Render RPM Spec file'
+  ansible.builtin.template:
+    src: 'image_module.spec.j2'
+    dest: "/tmp/compose_{{ blueprint['name'] }}/rpm/SPECS/{{ module_name }}.spec"
+    mode: '0644'
+
+- name: 'Build RPM'  # The RPM macro cannot use $PWD, as the envvar does not change when using chdir
+  ansible.builtin.command: rpmbuild --define "_topdir /tmp/compose_{{ blueprint['name'] }}/rpm" -v -bb SPECS/{{ module_name }}.spec
+  args:
+    chdir: "/tmp/compose_{{ blueprint['name'] }}/rpm"
+    creates: "/tmp/compose_{{ blueprint['name'] }}/rpm/RPMS/x86_64/{{ blueprint['name'] }}-{{ module_name }}-1.0-{{ ansible_facts['date_time']['epoch'] }}.x86_64.rpm"

@@ -141,12 +141,23 @@
     loop_var: 'module'
     index_var: 'module_idx'
 
-- name: 'Add package snippet for installing config RPM'
+- name: 'Build module RPM files'
+  ansible.builtin.include_tasks: 'tasks/build_module_rpm.yml'
+  loop: "{{ blueprint['modules'] }}"
+  loop_control:
+    loop_var: 'module_name'
+
+- name: 'Add package snippet for installing config and module RPMs'
   ansible.builtin.copy:
     content: |
       [[packages]]
       name = "{{ blueprint['name'] }}-config"
       version = "*"
+      {% for module in blueprint['modules'] %}
+      [[packages]]
+      name = "{{ blueprint['name'] }}-{{ module }}"
+      version = "*"
+      {% endfor %}
     dest: "/tmp/compose_{{ blueprint['name'] }}/toml/00_config_rpm.toml"
     mode: '0644'
 
@@ -182,29 +193,19 @@
     dest: "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-{{ ansible_facts['date_time']['epoch'] }}.x86_64/usr/lib/vendor/image_release.fact"
     mode: '0644'
 
-- name: 'Assemble RPM config module tree'
-  ansible.builtin.copy:
-    src: "{{ config_module['path'] }}/"
-    dest: "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-{{ ansible_facts['date_time']['epoch'] }}.x86_64/"
-    mode: 'preserve'
-  when: config_module['path'].endswith('files')
-  loop: "{{ module_components['files'] | default([]) }}"
-  loop_control:
-    loop_var: 'config_module'
-
-- name: 'Collect files'
+- name: 'Collect files in config RPM'
   ansible.builtin.find:
-    paths: "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT"
+    paths: "/tmp/compose_{{ blueprint['name'] }}/rpm/BUILDROOT/{{ blueprint['name'] }}-config-1.0-{{ ansible_facts['date_time']['epoch'] }}.x86_64"
     recurse: true
   register: 'config_rpm_files'
 
-- name: 'Render RPM Spec file'
+- name: 'Render config RPM Spec file'
   ansible.builtin.template:
     src: 'image_config.spec.j2'
     dest: "/tmp/compose_{{ blueprint['name'] }}/rpm/SPECS/image_config.spec"
     mode: '0644'
 
-- name: 'Build RPM'  # The RPM macro cannot use $PWD, as the envvar does not change when using chdir
+- name: 'Build config RPM'  # The RPM macro cannot use $PWD, as the envvar does not change when using chdir
   ansible.builtin.command: rpmbuild --define "_topdir /tmp/compose_{{ blueprint['name'] }}/rpm" -v -bb SPECS/image_config.spec
   args:
     chdir: "/tmp/compose_{{ blueprint['name'] }}/rpm"
