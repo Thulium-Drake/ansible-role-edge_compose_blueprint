@@ -61,7 +61,7 @@
     - name: 'Ensure directory for iPXE menus'
       ansible.builtin.file:
         path: '/var/www/html/ipxe'
-        owner: 'root'
+        state: 'directory'
         group: 'root'
         mode: '0755'
 
