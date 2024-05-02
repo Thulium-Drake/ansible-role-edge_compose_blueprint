@@ -54,3 +54,24 @@
       dest: 'grub.cfg'
   loop_control:
     loop_var: 'pxeboot'
+
+- name: 'Ensure iPXE menus'
+  when: edge_compose_blueprint_ipxe_menus
+  block:
+    - name: 'Ensure directory for iPXE menus'
+      ansible.builtin.file:
+        path: '/var/www/html/ipxe'
+        owner: 'root'
+        group: 'root'
+        mode: '0755'
+
+    - name: 'Update iPXE menus'
+      ansible.builtin.template:
+        src: 'image.ipxe.j2'
+        dest: "/var/www/html/ipxe/{{ blueprint['name'] }}.ipxe"
+        owner: 'root'
+        group: 'root'
+        mode: '0644'
+      loop: "{{ edge_compose_blueprint_images }}"
+      loop_control:
+        loop_var: 'blueprint'
