@@ -1,0 +1,16 @@
+#!ipxe
+# {{ ansible_managed }}
+menu {{ blueprint['name'] }}
+item --gap Stable Releases
+{# Get all stable refs, but put the most stable (at the end of the list) up top #}
+{% for ref in blueprint['stable_refs'] | default([]) | reverse %}
+item {{ ref | regex_replace('/', '') }} ${space} {{ ref }}
+{% endfor %}
+item --gap Latest Unstable Release
+item {{ blueprint['ref'] }} ${space} {{ blueprint['ref'] }}
+
+{% for ref in blueprint['stable_refs'] | default([]) + [blueprint['ref']] %}
+:{{ ref | regex_replace('/', '') }}
+linuxefi http://${next-server}/{{ blueprint['distro'] }}/vmlinuz root=live:${next-server}/{{ blueprint['distro'] }}/install.img inst.ks=${next-server}/{{ blueprint['name'] }}/install-{{ ref }}.ks
+initrdefi http://${next-server}/{{ blueprint['distro'] }}/initrd.img
+{% endfor %}
