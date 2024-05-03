@@ -15,7 +15,7 @@ goto ${menu} ||
 {% for ref in blueprint['stable_refs'] | default([]) + [blueprint['ref']] %}
 :{{ ref | regex_replace('/', '') }}
 imgfree
-kernel http://${next-server}/{{ blueprint['distro'] }}/vmlinuz root=live:http://${next-server}/{{ blueprint['distro'] }}/install.img inst.ks=${next-server}/{{ blueprint['name'] }}/install-{{ ref }}.ks
+kernel http://${next-server}/{{ blueprint['distro'] }}/vmlinuz root=live:http://${next-server}/{{ blueprint['distro'] }}/install.img inst.ks=${next-server}/{{ blueprint['name'] }}/install-{{ ref }}.ks initrd=initrd.img
 initrd http://${next-server}/{{ blueprint['distro'] }}/initrd.img
 
 {% endfor %}
