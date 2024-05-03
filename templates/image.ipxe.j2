@@ -8,9 +8,18 @@ item {{ ref | regex_replace('/', '') }} ${space} {{ ref }}
 {% endfor %}
 item --gap Latest Unstable Release
 item {{ blueprint['ref'] }} ${space} {{ blueprint['ref'] }}
+choose --default ${menu} menu || goto exit
+goto ${menu} ||
+
 
 {% for ref in blueprint['stable_refs'] | default([]) + [blueprint['ref']] %}
 :{{ ref | regex_replace('/', '') }}
-linuxefi http://${next-server}/{{ blueprint['distro'] }}/vmlinuz root=live:${next-server}/{{ blueprint['distro'] }}/install.img inst.ks=${next-server}/{{ blueprint['name'] }}/install-{{ ref }}.ks
-initrdefi http://${next-server}/{{ blueprint['distro'] }}/initrd.img
+imgfree
+kernel http://${next-server}/{{ blueprint['distro'] }}/vmlinuz root=live:http://${next-server}/{{ blueprint['distro'] }}/install.img inst.ks=${next-server}/{{ blueprint['name'] }}/install-{{ ref }}.ks
+initrd http://${next-server}/{{ blueprint['distro'] }}/initrd.img
+
 {% endfor %}
+
+:exit
+clear menu
+exit
