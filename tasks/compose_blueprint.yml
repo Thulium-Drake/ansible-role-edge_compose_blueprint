@@ -172,7 +172,7 @@
     src: "{{ edge_compose_blueprint_checkout }}/kickstart/{{ blueprint['kickstart_profile'] }}"
     dest: "/var/www/html/{{ blueprint['name'] }}/install-{{ ref | regex_replace('/', '') }}.ks"
     mode: '0644'
-  loop: "{{ blueprint['stable_refs'] | default([]) + [blueprint['ref']] }}"
+  loop: "{{ (blueprint['stable_refs'] | default([])) + [blueprint['ref']] }}"
   loop_control:
     loop_var: 'ref'
   when: blueprint['kickstart_profile'].endswith('.ks.j2')
