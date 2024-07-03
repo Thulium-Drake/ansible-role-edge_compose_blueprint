@@ -7,15 +7,9 @@
     mode: '0700'
   changed_when: false  # The creation of this dir is not significant
 
-- name: 'Ensure old blueprint deleted from osbuild-composer'
-  ansible.builtin.command: /usr/bin/composer-cli blueprints delete {{ image['name'] }}
-  register: 'delete_blueprint'
-  changed_when: true  # Command does not tell you when something has changed
-  failed_when: false  # Command only fails when a blueprint cannot be found
-
 - name: 'Import blueprint to osbuild-composer'
-  ansible.builtin.command: /usr/bin/composer-cli blueprints push /etc/osbuild-composer/blueprints/{{ image['name'] }}.toml
-  changed_when: true  # Command does not tell you when something has changed
+  infra.osbuild.push_blueprint:
+    src: "/etc/osbuild-composer/blueprints/{{ image['name'] }}.toml"
 
 - name: 'Check if this is an update of an existing image'
   ansible.builtin.stat:
@@ -23,39 +17,22 @@
   register: 'edge_image_repo'
 
 - name: 'Build edge-commit'
-  ansible.builtin.command: >-
-    /usr/bin/composer-cli
-    -j
-    compose
-    start-ostree
-    {{ (edge_image_repo['stat']['exists']) | ternary(' --url http://localhost/' + image['name'] + '/repo', '') }}
-    --ref {{ image['ref'] }} {{ image['name'] }}
-    edge-commit
-  register: 'compose_command'
-  changed_when: true  # This will always build a new image
-
-- name: 'Process output'
-  ansible.builtin.set_fact:
-    build_info: "{{ compose_command['stdout'] | from_json }}"
+  infra.osbuild.start_compose:
+    blueprint: "{{ image['name'] }}"
+    compose_type: 'edge-commit'
+    ostree_ref: "{{ image['ref'] }}"
+    ostree_url: "{{ (edge_image_repo['stat']['exists']) | ternary('http://localhost/' + image['name'] + '/repo', omit) }}"
+  register: 'compose_start'
 
 - name: 'Wait for osbuild-composer to compile image'
-  ansible.builtin.shell: |
-    set -o pipefail
-    /usr/bin/composer-cli compose list | grep {{ build_info[0]['body']['build_id'] }}
-  register: 'build_status'
-  until:
-    - "'RUNNING' not in build_status['stdout']"
-    - "'WAITING' not in build_status['stdout']"
-  retries: "{{ edge_compose_blueprint_build_timeout }}"
-  delay: 60
-  changed_when: "'FINISHED' in build_status['stdout']"
-  failed_when: "'FAILED' in build_status['stdout']"
+  infra.osbuild.wait_compose:
+    compose_id: "{{ compose_start['result']['body']['build_id'] }}"
+    timeout: "{{ edge_compose_blueprint_build_timeout * 60 }}"
 
 - name: 'Download result'
-  ansible.builtin.command:
-    cmd: "/usr/bin/composer-cli compose image {{ build_info[0]['body']['build_id'] }}"
-    chdir: '/var/cache/edge_result'
-    creates: "/var/cache/edge_result/{{ build_info[0]['body']['build_id'] }}-commit.tar"
+  infra.osbuild.export_compose:
+    compose_id: "{{ compose_start['result']['body']['build_id'] }}"
+    dest: "/var/cache/edge_result/{{ compose_start['result']['body']['build_id'] }}-commit.tar"
 
 - name: 'Ensure destination directory'
   ansible.builtin.file:
@@ -67,7 +44,7 @@
 
 - name: 'Extract image to webserver'
   ansible.builtin.unarchive:
-    src: "/var/cache/edge_result/{{ build_info[0]['body']['build_id'] }}-commit.tar"
+    src: "/var/cache/edge_result/{{ compose_start['result']['body']['build_id'] }}-commit.tar"
     dest: "/var/www/html/{{ image['name'] }}"
     remote_src: true
   when: not edge_image_repo['stat']['exists']
@@ -77,7 +54,7 @@
   block:
     - name: 'Extract image'
       ansible.builtin.unarchive:
-        src: "/var/cache/edge_result/{{ build_info[0]['body']['build_id'] }}-commit.tar"
+        src: "/var/cache/edge_result/{{ compose_start['result']['body']['build_id'] }}-commit.tar"
         dest: '/var/cache/edge_result'
         remote_src: true
 
@@ -89,7 +66,7 @@
       changed_when: true
 
     - name: 'Delete completed build'
-      ansible.builtin.command: /usr/bin/composer-cli compose delete {{ build_info[0]['body']['build_id'] }}
+      ansible.builtin.command: /usr/bin/composer-cli compose delete {{ compose_start['result']['body']['build_id'] }}
       changed_when: true
 
 - name: 'Ensure tempdir absent'

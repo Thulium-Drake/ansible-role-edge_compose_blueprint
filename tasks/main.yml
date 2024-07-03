@@ -4,6 +4,7 @@
     name:
       - 'dnf-utils'
       - 'git'
+      - 'python3-toml'
       - 'rpm-build'
     state: 'present'
 
