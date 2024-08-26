@@ -1,5 +1,5 @@
 Name:           edge-{{ blueprint['name'] }}-{{ module_name }}
-Version:        1.0
+Version:        {{ edge_compose_blueprint_git_version }}
 Release:        {{ ansible_facts['date_time']['epoch'] }}
 Summary:        Module {{ module_name }} RPM generated for Device Edge blueprint {{ blueprint['name'] }}
 BuildArch:      x86_64
@@ -13,7 +13,7 @@ License:        MIT
 
 %files
 {% for file in module_rpm_files['files'] | default([]) %}
-{{ file['path'] | regex_replace('/tmp/compose_' + blueprint['name'] + '/rpm/BUILDROOT/edge-' + blueprint['name'] + '-' + module_name + '-1.0-' + ansible_facts['date_time']['epoch'] + '.x86_64', '') }}
+{{ file['path'] | regex_replace('/tmp/compose_' + blueprint['name'] + '/rpm/BUILDROOT/edge-' + blueprint['name'] + '-' + module_name + '-' + edge_compose_blueprint_git_version + '-' + ansible_facts['date_time']['epoch'] + '.x86_64', '') }}
 {% endfor %}
 
 %description
