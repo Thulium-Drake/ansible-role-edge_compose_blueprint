@@ -220,6 +220,12 @@
     chdir: '/var/www/html/config-rpms'
   changed_when: true
 
+- name: 'Update tool RPM repository metadata'
+  ansible.builtin.command: /usr/bin/createrepo .
+  args:
+    chdir: '/var/www/html/tools-rpms'
+  changed_when: true
+
 - name: 'Clean up temporary work directory'
   ansible.builtin.file:
     path: "/tmp/compose_{{ blueprint['name'] }}"
