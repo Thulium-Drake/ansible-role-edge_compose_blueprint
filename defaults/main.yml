@@ -14,6 +14,8 @@ edge_compose_blueprint_git_version: 'master'
 edge_compose_blueprint_checkout: '/home/ansible/rh_edge_blueprints'
 # Set to false to skip updating Git, this can be useful when testing with local modification for troubleshooting
 edge_compose_blueprint_update_git: true
+# Set to true to force wiping the git checkout
+edge_compose_blueprint_clear_git: false
 # Path with the deployment key used for the repo
 edge_compose_blueprint_git_sshkey: ''
 

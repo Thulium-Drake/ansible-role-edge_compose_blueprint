@@ -11,6 +11,12 @@
   when:
     - edge_compose_blueprint | bool
   block:
+    - name: 'Wipe git checkout'
+      ansible.builtin.file:
+        path: "{{ edge_compose_blueprint_checkout }}"
+        state: 'absent'
+      when: edge_compose_blueprint_clear_git
+
     - name: 'Ensure git checkout up to date'
       ansible.builtin.git:
         accept_newhostkey: true
