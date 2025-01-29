@@ -7,6 +7,10 @@
       - 'rpm-build'
     state: 'present'
 
+- name: 'Get distro-id'
+  ansible.builtin.set_fact:
+    edge_compose_blueprint_distro: "{{ edge_compose_blueprint_distros[ansible_facts['distribution']] }}-{{ ansible_facts['distribution_major_version'] }}"
+
 - name: 'Compose blueprint files from source'
   when:
     - edge_compose_blueprint | bool
@@ -37,12 +41,15 @@
       loop: "{{ edge_compose_blueprint_images }}"
       loop_control:
         loop_var: 'blueprint'
-      when: blueprint['build_enabled'] | default(true) | bool
+      when:
+        - blueprint['build_enabled'] | default(true) | bool
+        - blueprint['distro'] == edge_compose_blueprint_distro
 
 - name: 'Build images with osbuild-composer'
   when:
     - edge_compose_blueprint_build | bool
     - image['build_enabled'] | default(true) | bool
+    - image['distro'] == edge_compose_blueprint_distro
   ansible.builtin.include_tasks: 'tasks/make_blueprint.yml'
   loop: "{{ edge_compose_blueprint_images }}"
   loop_control:

@@ -1,0 +1,5 @@
+---
+# Map distribution names to distro IDs used in osbuild-composer
+edge_compose_blueprint_distros:
+  RedHat: 'rhel'
+  Fedora: 'fedora'
