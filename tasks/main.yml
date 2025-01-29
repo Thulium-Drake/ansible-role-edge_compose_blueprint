@@ -90,3 +90,6 @@
       loop: "{{ edge_compose_blueprint_images }}"
       loop_control:
         loop_var: 'blueprint'
+      when:
+        - blueprint['build_enabled'] | default(true) | bool
+        - blueprint['distro'] == edge_compose_blueprint_distro
