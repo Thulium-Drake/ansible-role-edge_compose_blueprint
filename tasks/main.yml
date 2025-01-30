@@ -94,3 +94,7 @@
       when:
         - blueprint['build_enabled'] | default(true) | bool
         - blueprint['distro'] == edge_compose_blueprint_distro
+
+- name: 'Clean up old config RPMs'
+  ansible.builtin.command: find /var/www/html/config-rpms -name "*.rpm" -mtime +3 -delete
+  changed_when: true
