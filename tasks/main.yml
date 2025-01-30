@@ -32,6 +32,7 @@
         track_submodules: false
         update: true
       register: 'git_repo_information'
+      run_once: true
       become: false
       delegate_to: 'localhost'  # Save on Controller to be able to render templates
       when: edge_compose_blueprint_update_git | bool
