@@ -152,11 +152,11 @@
     content: |
       [[packages]]
       name = "edge-{{ blueprint['name'] }}-config"
-      version = "*"
+      version = "{{ edge_compose_blueprint_git_version }}"
       {% for module in blueprint['modules'] %}
       [[packages]]
       name = "edge-{{ blueprint['name'] }}-{{ module }}"
-      version = "*"
+      version = "{{ edge_compose_blueprint_git_version }}"
       {% endfor %}
     dest: "/tmp/compose_{{ blueprint['name'] }}/toml/00_config_rpm.toml"
     mode: '0644'

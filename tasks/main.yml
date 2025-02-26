@@ -7,6 +7,11 @@
       - 'rpm-build'
     state: 'present'
 
+- name: 'Make list of blueprints to generate'
+  ansible.builtin.set_fact:
+    edge_compose_blueprint_build_only: "{{ edge_compose_blueprint_images | | map(attribute='name') }}"
+  when: edge_compose_blueprint_build_only | length == 0
+
 - name: 'Get distro-id'
   ansible.builtin.set_fact:
     edge_compose_blueprint_distro: "{{ edge_compose_blueprint_distros[ansible_facts['distribution']] }}-{{ ansible_facts['distribution_major_version'] }}"
