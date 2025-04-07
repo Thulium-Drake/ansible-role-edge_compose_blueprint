@@ -4,8 +4,6 @@ edge_compose_blueprint: true             # Compose updated blueprints
 edge_compose_blueprint_build: true       # Build updated images for deployment
 edge_compose_blueprint_ipxe_menus: true  # Render iPXE menus to be used with an iPXE based deployment server
 
-edge_compose_blueprint_build_only: []    # Set to the names of a blueprint you wish to build right now (and skip the rest)
-
 # Amount of minutes to wait for build to complete
 edge_compose_blueprint_build_timeout: '30'
 
@@ -28,7 +26,7 @@ edge_compose_vendor: 'Thulium-Drake'
 # If required you can also add extra variables here that are used in the jinja templates called for this blueprint
 # The following keys are handled in this role:
 #  mandatory: name, distro, base, ref, kickstart_profile
-#  optional: build_enabled, modules, ssh_key, microshift_version, stable_refs
+#  optional: build_enabled, modules, ssh_key, microshift_multus_enabled, microshift_version, stable_refs
 edge_compose_blueprint_images:
   - name: 'microshift'
     build_enabled: true  # Set to false to disable build for this particular image
@@ -40,6 +38,7 @@ edge_compose_blueprint_images:
       - 'acceptance'
       - 'test'
     microshift_version: '4.14.10'
+    microshift_multus_enabled: true  # Installs and deploys the Multus CNI
     modules:             # Optional, extra directories with either TOML or RPM config trees
       - 'module'
     ssh_key:

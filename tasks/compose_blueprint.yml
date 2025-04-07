@@ -65,6 +65,39 @@
         blueprint_enabled_services:
           - 'microshift.service'
 
+- name: 'Get Microshift Multus container image URIs'
+  when:
+    - blueprint['microshift_multus_enabled'] is defined
+    - blueprint['microshift_multus_enabled']
+  block:
+    - name: 'Download RPM and extract release-x86_64.json'
+      ansible.builtin.shell: |
+        set -o pipefail
+        cd /tmp/compose_{{ blueprint['name'] }}/microshift
+        dnf download microshift-multus-release-info-{{ blueprint['microshift_version'] }} 1>&2
+        rpm2cpio microshift-multus-release-info-{{ blueprint['microshift_version'] }}-*.rpm | \
+        cpio --to-stdout -vi ./usr/share/microshift/release/release-multus-x86_64.json
+      register: 'microshift_multus_rpm_contents'
+      changed_when: false  # This task collects information
+
+    - name: 'Store results in fact'
+      ansible.builtin.set_fact:
+        edge_microshift_multus_info: "{{ microshift_multus_rpm_contents['stdout'] | from_json }}"
+
+    - name: 'Render Microshift TOML snippet'
+      ansible.builtin.copy:
+        content: |
+          [[packages]]
+          name = "microshift-multus"
+          version = "{{ blueprint['microshift_version'] }}"
+
+          {% for img in edge_microshift_multus_info['images'] | dict2items %}
+          [[containers]]
+          source = "{{ img['value'] }}"
+          {% endfor %}
+        dest: "/tmp/compose_{{ blueprint['name'] }}/toml/01_microshift_multus_images.toml"
+        mode: '0644'
+
 - name: 'Render base blueprint template'
   ansible.builtin.template:
     src: "{{ edge_compose_blueprint_checkout }}/base/{{ blueprint['base'] }}"
