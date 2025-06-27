@@ -45,6 +45,7 @@ edge_compose_blueprint_images:
       - 'ssh-ed25519 AAAA.... ansible@example.nl'  # If not defined will fallback to edge_compose_blueprint_ssh_key
     kickstart_profile: 'microshift-single-disk.ks.j2'
     kickstart_validate: false
+    kickstart_extra_kernel_args: 'inst.ssh=1'  # Enables the SSH server during installation for troubleshooting
 
 ## Common Kickstart variables for all blueprints
 # For blueprints that need a pull-secret incorporated in them during installation
