@@ -38,48 +38,48 @@
   ansible.builtin.set_fact:
     build_info: "{{ compose_command['stdout'] | from_json }}"
 
-- name: 'Wait for osbuild-composer to compile image'
-  ansible.builtin.shell: |
-    set -o pipefail
-    /usr/bin/composer-cli compose list | grep {{ build_info[0]['body']['build_id'] }}
-  register: 'build_status'
-  until:
-    - "'RUNNING' not in build_status['stdout']"
-    - "'WAITING' not in build_status['stdout']"
-  retries: "{{ edge_compose_blueprint_build_timeout }}"
-  delay: 60
-  changed_when: "'FINISHED' in build_status['stdout']"
-  failed_when: "'FAILED' in build_status['stdout']"
-
-- name: 'Download result'
-  ansible.builtin.command:
-    cmd: "/usr/bin/composer-cli compose image {{ build_info[0]['body']['build_id'] }}"
-    chdir: '/var/cache/edge_result'
-    creates: "/var/cache/edge_result/{{ build_info[0]['body']['build_id'] }}-commit.tar"
-
-- name: 'Ensure destination directory'
-  ansible.builtin.file:
-    path: "/var/www/html/{{ image['name'] }}"
-    state: 'directory'
-    owner: 'root'
-    group: 'root'
-    mode: '0755'
-
-- name: 'Extract image to webserver'
-  ansible.builtin.unarchive:
-    src: "/var/cache/edge_result/{{ build_info[0]['body']['build_id'] }}-commit.tar"
-    dest: "/var/www/html/{{ image['name'] }}"
-    remote_src: true
-  when: not edge_image_repo['stat']['exists']
-
-- name: 'Extract and apply update'
-  when: edge_image_repo['stat']['exists']
+- name: 'Compile image'
   block:
-    - name: 'Extract image'
+    - name: 'Wait for osbuild-composer to compile image'
+      ansible.builtin.shell: |
+        set -o pipefail
+        /usr/bin/composer-cli compose list | grep {{ build_info[0]['body']['build_id'] }}
+      register: 'build_status'
+      until:
+        - "'RUNNING' not in build_status['stdout']"
+        - "'WAITING' not in build_status['stdout']"
+      retries: "{{ edge_compose_blueprint_build_timeout }}"
+      delay: 60
+      changed_when: "'FINISHED' in build_status['stdout']"
+      failed_when: "'FAILED' in build_status['stdout']"
+
+    - name: 'Download result'
+      ansible.builtin.command:
+        cmd: "/usr/bin/composer-cli compose image {{ build_info[0]['body']['build_id'] }}"
+        chdir: '/var/cache/edge_result'
+        creates: "/var/cache/edge_result/{{ build_info[0]['body']['build_id'] }}-commit.tar"
+
+    - name: 'Ensure destination directory'
+      ansible.builtin.file:
+        path: "/var/www/html/{{ image['name'] }}"
+        state: 'directory'
+        owner: 'root'
+        group: 'root'
+        mode: '0755'
+
+    - name: 'Extract new image to webserver'
+      ansible.builtin.unarchive:
+        src: "/var/cache/edge_result/{{ build_info[0]['body']['build_id'] }}-commit.tar"
+        dest: "/var/www/html/{{ image['name'] }}"
+        remote_src: true
+      when: not edge_image_repo['stat']['exists']
+
+    - name: 'Extract image to temp folder'
       ansible.builtin.unarchive:
         src: "/var/cache/edge_result/{{ build_info[0]['body']['build_id'] }}-commit.tar"
         dest: '/var/cache/edge_result'
         remote_src: true
+      when: edge_image_repo['stat']['exists']
 
     - name: 'Apply update to existing ostree on webserver'
       ansible.builtin.shell: |
@@ -87,13 +87,23 @@
         /usr/bin/ostree summary --update --repo=/var/www/html/{{ image['name'] }}/repo
         /usr/sbin/restorecon -r /var/www/html/{{ image['name'] }}/repo
       changed_when: true
+      when: edge_image_repo['stat']['exists']
+  rescue:
+    - name: 'Build failed, continuing with other images'
+      ansible.builtin.debug:
+        msg: |
+          Image build failed, please check logs for os-composer to analyze errors
+
+    - name: 'Saving logs for failed build in /var/tmp'
+      ansible.builtin.command: /usr/bin/composer-cli compose logs {{ build_info[0]['body']['build_id'] }} --filename /var/tmp
+      changed_when: true
+  always:
+    - name: 'Ensure tempdir absent'
+      ansible.builtin.file:
+        path: '/var/cache/edge_result'
+        state: 'absent'
+      changed_when: false  # The deletion of this dir is not significant
 
     - name: 'Delete completed build'
       ansible.builtin.command: /usr/bin/composer-cli compose delete {{ build_info[0]['body']['build_id'] }}
       changed_when: true
-
-- name: 'Ensure tempdir absent'
-  ansible.builtin.file:
-    path: '/var/cache/edge_result'
-    state: 'absent'
-  changed_when: false  # The deletion of this dir is not significant
