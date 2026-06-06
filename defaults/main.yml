@@ -1,8 +1,10 @@
 ---
 ## Role actions to perform
-edge_compose_blueprint: true             # Compose updated blueprints
-edge_compose_blueprint_build: true       # Build updated images for deployment
-edge_compose_blueprint_ipxe_menus: true  # Render iPXE menus to be used with an iPXE based deployment server
+edge_compose_blueprint: true                    # Compose updated blueprints
+edge_compose_blueprint_build_config_rpms: true  # Build RPM configuration packages,
+                                                # skipping these can speed up the process when there's no changes
+edge_compose_blueprint_build: true              # Build updated images for deployment
+edge_compose_blueprint_ipxe_menus: true         # Render iPXE menus to be used with an iPXE based deployment server
 
 # Amount of minutes to wait for build to complete
 edge_compose_blueprint_build_timeout: '30'
