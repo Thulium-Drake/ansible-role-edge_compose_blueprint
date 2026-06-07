@@ -179,7 +179,7 @@
   loop: "{{ blueprint['modules'] }}"
   loop_control:
     loop_var: 'module_name'
-  when: edge_compose_blueprint_build_config_rpms
+  when: edge_compose_blueprint_build_config_rpms | bool
 
 - name: 'Add package snippet for installing config and module RPMs'
   ansible.builtin.copy:
