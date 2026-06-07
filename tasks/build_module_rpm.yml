@@ -26,6 +26,17 @@
     recurse: true
   register: 'module_rpm_files'
 
+- name: 'Save module file list'
+  ansible.builtin.copy:
+    dest: "/tmp/compose_{{ blueprint['name'] }}//rpm/BUILD/files.list"
+    content: |
+      {% for file in module_rpm_files['files'] | default([]) %}
+      {{ file['path'] | regex_replace('/tmp/compose_' + blueprint['name'] + '/rpm/BUILDROOT/edge-' + blueprint['name'] + '-' + module_name + '-' + edge_compose_blueprint_git_version + '-' + ansible_facts['date_time']['epoch'] + '.x86_64', '') }}
+      {% endfor %}
+    owner: 'root'
+    group: 'root'
+    mode: '0644'
+
 - name: 'Render RPM Spec file'
   ansible.builtin.template:
     src: 'image_module.spec.j2'
@@ -33,7 +44,7 @@
     mode: '0644'
 
 - name: 'Build RPM'  # The RPM macro cannot use $PWD, as the envvar does not change when using chdir
-  ansible.builtin.command: rpmbuild --define "_topdir /tmp/compose_{{ blueprint['name'] }}/rpm" -v -bb SPECS/{{ module_name }}.spec
+  ansible.builtin.command: rpmbuild --define "_image_name {{ blueprint['name'] }}" --define "_topdir /tmp/compose_{{ blueprint['name'] }}/rpm" -v -bb SPECS/{{ module_name }}.spec
   args:
     chdir: "/tmp/compose_{{ blueprint['name'] }}/rpm"
     creates: "/tmp/compose_{{ blueprint['name'] }}/rpm/RPMS/x86_64/edge-{{ blueprint['name'] }}-{{ module_name }}-{{ edge_compose_blueprint_git_version }}-{{ ansible_facts['date_time']['epoch'] }}.x86_64.rpm"
